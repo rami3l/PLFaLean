@@ -1,4 +1,4 @@
-# plfl
+# PLFaLean
 
 My journey of learning Lean 4 by implementing proofs from the wonderful book [_Programming Language Foundations in Agda_](https://plfa.github.io).
 
