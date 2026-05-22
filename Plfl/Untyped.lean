@@ -1,3 +1,5 @@
+-- module
+
 -- https://plfa.github.io/Untyped/
 
 import Plfl.Init
@@ -45,16 +47,16 @@ end Notation
 -- https://plfa.github.io/Untyped/#exercise-context%E2%84%95-practice
 instance Context.equiv_nat : Context ≃ ℕ where
   toFun := List.length
-  invFun := (List.replicate · ✶)
+  invFun := (List.replicate · (✶))
   left_inv := left_inv
   right_inv := by intro; simp only [List.length_replicate]
   where
     left_inv := by intro
     | [] => trivial
-    | ✶ :: ss => calc List.replicate (✶ :: ss).length ✶
-      _ = List.replicate (ss.length + 1) ✶ := by rw [List.length_cons ✶ ss]
-      _ = ✶ :: List.replicate ss.length ✶ := by rw [List.replicate_succ ✶ ss.length]
-      _ = ✶ :: ss := by have := left_inv ss; simp_all only
+    | (✶) :: ss => calc List.replicate ((✶) :: ss).length (✶)
+      _ = List.replicate (ss.length + 1) (✶) := by rw [List.length_cons]
+      _ = (✶) :: List.replicate ss.length (✶) := by rw [List.replicate_succ]
+      _ = (✶) :: ss := by have := left_inv ss; simp_all only
 
 instance : Coe ℕ Context where coe := Context.equiv_nat.invFun
 
@@ -89,8 +91,8 @@ inductive Term : Context → Ty → Type where
 -- Lookup
 | var : Γ ∋ a → Term Γ a
 -- Lambda
-| lam : Term (Γ‚ ✶ /- a -/) ✶ /- b -/ → Term Γ ✶ /- (a =⇒ b) -/
-| ap : Term Γ ✶ /- (a =⇒ b) -/ → Term Γ ✶ /- a -/ → Term Γ ✶ /- b -/
+| lam : Term (Γ‚ (✶) /- a -/) (✶) /- b -/ → Term Γ (✶) /- (a =⇒ b) -/
+| ap : Term Γ (✶) /- (a =⇒ b) -/ → Term Γ (✶) /- a -/ → Term Γ (✶) /- b -/
 deriving DecidableEq, Repr
 
 namespace Notation
@@ -101,10 +103,10 @@ namespace Notation
   scoped prefix:50 "ƛ " => lam
   scoped infixr:min " $ " => ap
   scoped infixl:70 " □ " => ap
-  scoped prefix:90 "` " => var
+  scoped prefix:90 "‵" => var
 
   -- https://plfa.github.io/Untyped/#writing-variables-as-numerals
-  scoped macro "#" n:term:90 : term => `(`♯$n)
+  scoped macro "#" n:term:90 : term => `(‵ ♯$n)
 end Notation
 
 namespace Term
@@ -127,28 +129,26 @@ namespace Subst
   If one context maps to another,
   the mapping holds after adding the same variable to both contexts.
   -/
-  def ext : (∀ {a}, Γ ∋ a → Δ ∋ a) → Γ‚ b ∋ a → Δ‚ b ∋ a := by
-    intro ρ; intro
-    | .z => exact .z
-    | .s x => refine .s ?_; exact ρ x
+  def ext (Base : ∀ {a}, Γ ∋ a → Δ ∋ a) : ∀ {a}, Γ‚ b ∋ a → Δ‚ b ∋ a
+    | _, .z => .z
+    | _, .s x => .s (Base x)
 
   /--
   If one context maps to another,
   then the type judgements are the same in both contexts.
   -/
-  def rename : (∀ {a}, Γ ∋ a → Δ ∋ a) → Γ ⊢ a → Δ ⊢ a := by
+  def rename : (Base : ∀ {a}, Γ ∋ a → Δ ∋ a) → Γ ⊢ a → Δ ⊢ a := by
     intro ρ; intro
-    | ` x => exact ` (ρ x)
+    | ‵ x => exact ‵ (ρ x)
     | ƛ n => exact ƛ (rename (ext ρ) n)
     | l □ m => exact rename ρ l □ rename ρ m
 
   abbrev shift : Γ ⊢ a → Γ‚ b ⊢ a := rename .s
 
   -- https://plfa.github.io/Untyped/#simultaneous-substitution
-  def exts : (∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ‚ b ∋ a → Δ‚ b ⊢ a := by
-    intro σ; intro
-    | .z => exact `.z
-    | .s x => apply shift; exact σ x
+  def exts (Base : ∀ {a}, Γ ∋ a → Δ ⊢ a) : ∀ {a}, Γ‚ b ∋ a → Δ‚ b ⊢ a
+    | _, .z => ‵ .z
+    | _, .s x => shift (Base x)
 
   /--
   General substitution for multiple free variables.
@@ -156,23 +156,22 @@ namespace Subst
   then the type judgements are the same before and after the mapping,
   i.e. after replacing the free variables in the former with (expanded) terms.
   -/
-  def subst : (∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ ⊢ a → Δ ⊢ a := by
+  def subst : (Base : ∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ ⊢ a → Δ ⊢ a := by
     intro σ; intro
-    | ` i => exact σ i
+    | ‵ i => exact σ i
     | ƛ n => exact ƛ (subst (exts σ) n)
     | l □ m => exact subst σ l □ subst σ m
 
   -- https://plfa.github.io/Untyped/#single-substitution
-  abbrev subst₁σ (v : Γ ⊢ b) : ∀ {a}, Γ‚ b ∋ a → Γ ⊢ a := by
-    introv; intro
-    | .z => exact v
-    | .s x => exact ` x
+  abbrev subst₁σ (v : Γ ⊢ b) : ∀ {a}, Γ‚ b ∋ a → Γ ⊢ a
+    | _, .z => v
+    | _, .s x => ‵ x
 
   /--
   Substitution for one free variable `v` in the term `n`.
   -/
-  abbrev subst₁ (v : Γ ⊢ b) (n : Γ‚ b ⊢ a) : Γ ⊢ a := by
-    refine subst ?_ n; exact subst₁σ v
+  abbrev subst₁ (v : Γ ⊢ b) (n : Γ‚ b ⊢ a) : Γ ⊢ a :=
+    subst (subst₁σ v) n
 end Subst
 
 open Subst
@@ -185,7 +184,7 @@ end Notation
 -- https://plfa.github.io/Untyped/#neutral-and-normal-terms
 mutual
   inductive Neutral : Γ ⊢ a → Type
-  | var : (x : Γ ∋ a) → Neutral (` x)
+  | var : (x : Γ ∋ a) → Neutral (‵ x)
   | ap : Neutral l → Normal m → Neutral (l □ m)
   deriving Repr
 
@@ -206,7 +205,7 @@ namespace Notation
   scoped prefix:50 "ƛₙ " => lam
   scoped infixr:min " $ₙ " => ap
   scoped infixl:70 " □ₙ " => ap
-  scoped prefix:90 "`ₙ " => var
+  scoped prefix:90 "‵ₙ" => var
 end Notation
 
 example : Normal (Term.twoC (Γ := ∅)) := ƛₙ ƛₙ (′#′1 □ₙ (′#′1 □ₙ (′#′0)))
@@ -258,25 +257,31 @@ namespace Notation
 end Notation
 
 namespace Reduce.Clos
-  @[refl] abbrev refl : m —↠ m := .refl
-  abbrev tail : (m —↠ n) → (n —→ n') → (m —↠ n') := .tail
-  abbrev head : (m —→ n) → (n —↠ n') → (m —↠ n') := .head
-  abbrev single : (m —→ n) → (m —↠ n) := .single
+  @[refl] abbrev refl : m —↠ m := Relation.ReflTransGen.refl
+  abbrev tail : (m —↠ n) → (n —→ n') → (m —↠ n') := Relation.ReflTransGen.tail
+  abbrev head : (m —→ n) → (n —↠ n') → (m —↠ n') := Relation.ReflTransGen.head
+  abbrev single : (m —→ n) → (m —↠ n) := Relation.ReflTransGen.single
 
-  instance : Coe (m —→ n) (m —↠ n) where coe r := .single r
+  instance : Coe (m —→ n) (m —↠ n) where coe r := Relation.ReflTransGen.single r
 
-  instance : Trans (α := Γ ⊢ a) Clos Clos Clos where trans := .trans
-  instance : Trans (α := Γ ⊢ a) Clos Reduce Clos where trans c r := c.tail r
-  instance : Trans (α := Γ ⊢ a) Reduce Reduce Clos where trans r r' := .tail r r'
-  instance : Trans (α := Γ ⊢ a) Reduce Clos Clos where trans r c := .head r c
+  instance : Trans (α := Γ ⊢ a) Clos Clos Clos where trans := Relation.ReflTransGen.trans
+  instance : Trans (α := Γ ⊢ a) Clos Reduce Clos where trans c r := Relation.ReflTransGen.tail c r
+  instance : Trans (α := Γ ⊢ a) Reduce Reduce Clos where trans r r' := Relation.ReflTransGen.tail (Relation.ReflTransGen.single r) r'
+  instance : Trans (α := Γ ⊢ a) Reduce Clos Clos where trans r c := Relation.ReflTransGen.head r c
 end Reduce.Clos
 
 namespace Reduce
   -- https://plfa.github.io/Untyped/#example-reduction-sequence
   open Term
 
+  theorem test_shift_twoC : shift (shift (shift (twoC (Γ := ∅)))) = twoC (Γ := ∅‚ ✶‚ ✶‚ ✶) := by
+    simp_all only [List.empty_eq]
+    rfl
+
   example : fourC' (Γ := ∅) —↠ fourC := calc addC □ twoC □ twoC
-    _ —→ (ƛ ƛ ƛ (twoC □ #1 $ (#2 □ #1 □ #0))) □ twoC := by apply_rules [apξ₁, lamβ]
+    _ —→ (ƛ ƛ ƛ (twoC □ #1 $ (#2 □ #1 □ #0))) □ twoC := by
+      apply apξ₁
+      exact lamβ
     _ —→ ƛ ƛ (twoC □ #1 $ (twoC □ #1 □ #0)) := by exact lamβ
     _ —→ ƛ ƛ ((ƛ (#2 $ #2 $ #0)) $ (twoC □ #1 □ #0)) := by apply_rules [lamζ, apξ₁, lamβ]
     _ —→ ƛ ƛ (#1 $ #1 $ (twoC □ #1 □ #0)) := by apply_rules [lamζ, lamβ]
@@ -292,44 +297,36 @@ inductive Progress (m : Γ ⊢ a) where
 | step : (m —→ n) → Progress m
 | done : Normal m → Progress m
 
+namespace Progress
+
 /--
 If a term is well-scoped, then it satisfies progress.
 -/
-def Progress.progress : (m : Γ ⊢ a) → Progress m := open Reduce in by
-  intro
-  | ` x => apply done; exact ′`ₙ x
+def progress : (m : Γ ⊢ ✶) → Progress m
+  | ‵ x => .done (′ ‵ₙ x)
   | ƛ n =>
-    have : sizeOf n < sizeOf (ƛ n) := by simp only [
-      Term.lam.sizeOf_spec, lt_add_iff_pos_left,
-      add_pos_iff, zero_lt_one, true_or,
-    ]
+    have : sizeOf n < sizeOf (ƛ n) := by simp only [Term.lam.sizeOf_spec]; omega
     match progress n with
-    | .done n => apply done; exact ƛₙ n
-    | .step n => apply step; exact lamζ n
-  | ` x □ m =>
-    have : sizeOf m < sizeOf (` x □ m) := by simp only [
-      Term.ap.sizeOf_spec, Term.var.sizeOf_spec,
-      Ty.star.sizeOf_spec, lt_add_iff_pos_left,
-      add_pos_iff, zero_lt_one, true_or, or_self,
-    ]
+    | .done n' => .done (ƛₙ n')
+    | .step r => .step (Reduce.lamζ r)
+  | ‵ x □ m =>
+    have : sizeOf m < sizeOf (‵ x □ m) := by simp only [Term.ap.sizeOf_spec]; omega
     match progress m with
-    | .done m => apply done; exact ′`ₙx □ₙ m
-    | .step m => apply step; exact apξ₂ m
-  | (ƛ n) □ m => apply step; exact lamβ
-  | l@(_ □ _) □ m =>
-    have : sizeOf l < sizeOf (l □ m) := by simp_arith
-    match progress l with
-    | .step l => simp_all only [namedPattern]; apply step; exact apξ₁ l
-    | .done (′l') =>
-      simp_all only [namedPattern]; rename_i h; simp only [h.symm, Term.ap.sizeOf_spec]
-      have : sizeOf m < sizeOf (l □ m) := by
-        aesop_subst h; simp only [
-          Term.ap.sizeOf_spec, lt_add_iff_pos_left, add_pos_iff,
-          zero_lt_one, true_or, or_self,
-        ]
+    | .done m' => .done (′ ‵ₙ x □ₙ m')
+    | .step r => .step (Reduce.apξ₂ r)
+  | (ƛ n) □ m => .step Reduce.lamβ
+  | (l' □ l'') □ m =>
+    have : sizeOf (l' □ l'') < sizeOf ((l' □ l'') □ m) := by simp only [Term.ap.sizeOf_spec]; omega
+    match progress (l' □ l'') with
+    | .step r => .step (Reduce.apξ₁ r)
+    | .done (′neutral_l) =>
+      have : sizeOf m < sizeOf ((l' □ l'') □ m) := by simp only [Term.ap.sizeOf_spec]; omega
       match progress m with
-      | .done m => apply done; exact ′l' □ₙ m
-      | .step m => apply step; exact apξ₂ m
+      | .done m' => .done (′neutral_l □ₙ m')
+      | .step r => .step (Reduce.apξ₂ r)
+termination_by m => sizeOf m
+
+end Progress
 
 open Progress (progress)
 
@@ -405,7 +402,7 @@ section examples
   abbrev fourS'' : Γ ⊢ ✶ := mulS □ twoS □ twoS
 
   abbrev evalRes (l : ∅ ⊢ a) (gas := 100) := (eval gas l).3
-
+  -- abbrev evalResStar (l : ∅ ⊢ ✶) (gas := 100) := (eval gas l).3
   #eval evalRes (gas := 3) fourC'
   #eval evalRes fourC'
 

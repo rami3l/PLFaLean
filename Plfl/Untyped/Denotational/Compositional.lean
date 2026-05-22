@@ -77,15 +77,15 @@ theorem ap_equiv : ℰ (l □ m) = (ℰ l ● ℰ m) := by ext; exact ⟨𝒜_�
 
 abbrev 𝒱 (i : Γ ∋ ✶) (γ : Env Γ) (v : Value) : Prop := v ⊑ γ i
 
-theorem var_inv (d : ℰ (` i) γ v) : 𝒱 i γ v := by
-  generalize hx : (` i) = x at *
+theorem var_inv (d : ℰ (‵ i) γ v) : 𝒱 i γ v := by
+  generalize hx : (‵ i) = x at *
   induction d with try injection hx
   | var => subst_vars; rfl
   | bot => exact .bot
   | conj _ _ ih ih' => exact (ih hx).conjL (ih' hx)
   | sub _ lt ih => exact lt.trans (ih hx)
 
-theorem var_equiv : ℰ (` i) = 𝒱 i := by ext; exact ⟨var_inv, .sub .var⟩
+theorem var_equiv : ℰ (‵ i) = 𝒱 i := by ext; exact ⟨var_inv, .sub .var⟩
 
 -- https://plfa.github.io/Compositional/#congruence
 lemma lam_congr (h : ℰ n = ℰ n') : ℰ (ƛ n) = ℰ (ƛ n') := calc _
@@ -141,7 +141,7 @@ theorem compositionality {c : Holed Γ Δ} (h : ℰ m = ℰ n) : ℰ (c.plug m) 
 It is like `ℰ m`, but defined computationally.
 -/
 def ℰ₀ : (Γ ⊢ ✶) → Denot Γ
-| ` i => 𝒱 i
+| ‵ i => 𝒱 i
 | ƛ n => ℱ (ℰ₀ n)
 | l □ m => ℰ₀ l ● ℰ₀ m
 

@@ -14,7 +14,7 @@ abbrev Subst (Γ Δ) := ∀ {a : Ty}, Γ ∋ a → Δ ⊢ a
 abbrev ids : Subst Γ Γ := .var
 abbrev shift : Subst Γ (Γ‚ a) := .var ∘ .s
 
-abbrev cons (m : Δ ⊢ a) (σ : Subst Γ Δ) : Subst (Γ‚ a) Δ
+@[simp] def cons (m : Δ ⊢ a) (σ : Subst Γ Δ) : Subst (Γ‚ a) Δ
 | _, .z => m
 | _, .s x => σ x
 
@@ -35,13 +35,13 @@ section
   variable {m : Δ ⊢ a} {σ : Subst Γ Δ} {τ : Subst Δ Φ}
 
   -- https://plfa.github.io/Substitution/#proofs-of-sub-head-sub-tail-sub-η-z-shift-sub-idl-sub-dist-and-sub-app
-  @[simp] theorem sub_head : ⟪m ⦂⦂ σ⟫ (`.z) = m := rfl
+  @[simp] theorem sub_head : ⟪m ⦂⦂ σ⟫ (‵ .z) = m := rfl
   @[simp] theorem sub_tail : (shift ⨟ m ⦂⦂ σ) = σ (a := b) := rfl
-  @[simp] theorem sub_η {σ : Subst (Γ‚ a) Δ} : (⟪σ⟫ (`.z) ⦂⦂ (shift ⨟ σ)) = σ (a := b) := by ext i; cases i <;> rfl
-  @[simp] theorem z_shift : ((`.z) ⦂⦂ shift) = @ids (Γ‚ a) b := by ext i; cases i <;> rfl
+  @[simp] theorem sub_η {σ : Subst (Γ‚ a) Δ} : (⟪σ⟫ (‵ .z) ⦂⦂ (shift ⨟ σ)) = σ (a := b) := by funext i; cases i <;> rfl
+  @[simp] theorem z_shift : ((‵ .z) ⦂⦂ shift) = @ids (Γ‚ a) b := by funext i; cases i <;> rfl
   @[simp] theorem ids_seq : (ids ⨟ σ) = σ (a := a) := rfl
   @[simp] theorem sub_ap {l m : Γ ⊢ ✶} : ⟪σ⟫ (l □ m) = (⟪σ⟫ l) □ (⟪σ⟫ m) := rfl
-  @[simp] theorem sub_dist : @Eq (Γ‚ a ∋ b → Φ ⊢ b) ((m ⦂⦂ σ) ⨟ τ) ((⟪τ⟫ m) ⦂⦂ (σ ⨟ τ)) := by ext i; cases i <;> rfl
+  @[simp] theorem sub_dist : @Eq (Γ‚ a ∋ b → Φ ⊢ b) ((m ⦂⦂ σ) ⨟ τ) ((⟪τ⟫ m) ⦂⦂ (σ ⨟ τ)) := by funext i; cases i <;> rfl
 end
 
 -- https://plfa.github.io/Substitution/#interlude-congruences
@@ -53,40 +53,44 @@ section
   variable {m : Γ ⊢ a} {σ : Subst Γ Δ} {ρ : Rename Γ Δ}
 
   -- https://plfa.github.io/Substitution/#relating-rename-exts-ext-and-subst-zero-to-the-%CF%83-algebra
-  @[simp] theorem ren_ext : @Eq (Γ‚ b ∋ c → Δ‚ b ⊢ c) (ren (ext ρ)) (exts (ren ρ)) := by ext i; cases i <;> rfl
+  @[simp] theorem ren_ext : @Eq (Γ‚ b ∋ c → Δ‚ b ⊢ c) (ren (ext ρ)) (exts (ren ρ)) := by funext i; cases i <;> rfl
   @[simp] theorem ren_shift : @Eq (Γ ∋ a → Γ‚ b ⊢ a) (ren .s) shift := by congr
 
   theorem rename_subst_ren {Γ Δ} {ρ : Rename Γ Δ} {m : Γ ⊢ a} : rename ρ m = ⟪ren ρ⟫ m := by
     match m with
-    | ` _ => rfl
+    | ‵ _ => rfl
     | ƛ n => apply congr_arg Term.lam; rw [rename_subst_ren]; congr; funext _; exact ren_ext
     | l □ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact rename_subst_ren
 
   theorem rename_shift : @Eq (Γ‚ ✶ ⊢ a) (rename .s m) (⟪shift⟫ m) := by
     simp only [rename_subst_ren]; congr
 
-  theorem exts_cons_shift : exts (a := a) (b := b) σ = (`.z ⦂⦂ (σ ⨟ shift)) := by
-    ext i; cases i <;> simp only [exts, rename_subst_ren, ren_shift]; rfl
+  theorem exts_cons_shift : exts (a := a) (b := b) σ = (‵ .z ⦂⦂ (σ ⨟ shift)) := by
+    funext i; cases i <;> simp [exts, seq, cons, rename_shift]
 
-  theorem ext_cons_z_shift : @Eq (Γ‚ b ∋ a → Δ‚ b ⊢ a) (ren (ext ρ)) (`.z ⦂⦂ (ren ρ ⨟ shift)) := by
-    ext i; cases i <;> simp only [ren_ext, exts, rename_subst_ren, ren_shift]; rfl
+  theorem ext_cons_z_shift : @Eq (Γ‚ b ∋ a → Δ‚ b ⊢ a) (ren (ext ρ)) (‵ .z ⦂⦂ (ren ρ ⨟ shift)) := by
+    funext i; cases i <;> simp only [ren_ext, exts, rename_subst_ren, ren_shift]; rfl
+    simp_all only [cons, Function.comp_apply]
 
   theorem subst_z_cons_ids {m : Γ ⊢ a} : @Eq (Γ‚ ✶ ∋ a → Γ ⊢ a) (subst₁σ m) (m ⦂⦂ ids) := by
-    ext i; cases i <;> rfl
+    funext i; cases i <;> rfl
 
   -- https://plfa.github.io/Substitution/#proofs-of-sub-abs-sub-id-and-rename-id
-  theorem sub_lam {σ : Subst Γ Δ} {n : Γ‚ ✶ ⊢ ✶} : ⟪σ⟫ (ƛ n) = (ƛ ⟪(`.z) ⦂⦂ (σ ⨟ shift)⟫ n) := by
+  theorem sub_lam {σ : Subst Γ Δ} {n : Γ‚ ✶ ⊢ ✶} : ⟪σ⟫ (ƛ n) = (ƛ ⟪(‵ .z) ⦂⦂ (σ ⨟ shift)⟫ n) := by
     change (ƛ ⟪exts σ⟫ n) = _; congr; funext _; exact exts_cons_shift
 
   @[simp] theorem exts_ids : @Eq (Γ‚ b ∋ a → _) (exts ids) ids := by ext i; cases i <;> rfl
 
   theorem sub_ids {Γ} {m : Γ ⊢ a} : ⟪ids (Γ := Γ)⟫ m = m := by
     match m with
-    | ` _ => rfl
-    | ƛ n => apply congr_arg Term.lam; convert sub_ids; exact exts_ids
+    | ‵ _ => rfl
+    | ƛ n => apply congr_arg Term.lam; convert sub_ids;
+             simp_all only
+             ext x_1 x_2 : 2
+             simp_all only [exts_ids]
     | l □ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact sub_ids
 
-  theorem rename_id : rename (λ {a} x => x) m = m := by
+  theorem rename_id : rename (λ {_} x => x) m = m := by
     convert sub_ids; ext; simp only [rename_subst_ren, ren]; congr
 
   -- https://plfa.github.io/Substitution/#proof-of-sub-idr
@@ -99,12 +103,12 @@ section
 
   -- https://plfa.github.io/Substitution/#proof-of-sub-sub
   @[simp] theorem comp_ext : @Eq (Γ‚ b ∋ a → _) ((ext ρ) ∘ (ext ρ')) (ext (ρ ∘ ρ')) := by
-    ext i; cases i <;> rfl
+    funext i; cases i <;> rfl
 
   theorem comp_rename {Γ Δ Φ} {m : Γ ⊢ a} {ρ : Rename Δ Φ} {ρ' : Rename Γ Δ}
   : rename ρ (rename ρ' m) = rename (ρ ∘ ρ') m := by
      match m with
-    | ` _ => rfl
+    | ‵ _ => rfl
     | ƛ n => apply congr_arg Term.lam; convert comp_rename; exact comp_ext.symm
     | l □ m => apply congr_arg₂ Term.ap <;> exact comp_rename
 
@@ -113,14 +117,14 @@ section
   : ⟪exts (b := ✶) σ⟫ (rename ρ m) = rename ρ (⟪σ⟫ m)
   := by
     match m with
-    | ` _ => exact r
+    | ‵ _ => exact r
     | l □ m => apply congr_arg₂ Term.ap <;> exact comm_subst_rename r
     | ƛ n =>
       apply congr_arg Term.lam
 
-      let ρ' : ∀ {Γ}, Rename Γ (Γ‚ ✶) := by intro
-      | [] => intro; intro.
-      | ✶ :: Γ => intro; exact ext ρ
+      let ρ' : ∀ {Γ}, Rename Γ (Γ‚ ✶)
+        | [] => λ i => by cases i
+        | _ :: _ => ext ρ
 
       apply comm_subst_rename (Γ := Γ‚ ✶) (Δ := Δ‚ ✶) (σ := exts σ) (ρ := ρ') (m := n); intro
       | .z => rfl
@@ -137,15 +141,16 @@ section
   variable {ρ : Rename Γ Δ} {σ : Subst Γ Δ} {τ : Subst Δ Φ} {θ : Subst Φ Ψ}
 
   theorem exts_seq_exts : @Eq (Γ‚ ✶ ∋ a → _) (exts σ ⨟ exts τ) (exts (σ ⨟ τ)) := by
-    ext i; match i with
+    funext i; match i with
     | .z => rfl
-    | .s i => conv_lhs =>
-      change ⟪exts τ⟫ (rename .s (σ i)); rw [comm_subst_rename (σ := τ) (ρ := .s) rfl]; rfl
+    | .s i =>
+      change ⟪exts τ⟫ (rename .s (σ i)) = rename .s (⟪τ⟫ (σ i))
+      exact comm_subst_rename (m := σ i) (ρ := .s) (λ {x} => rfl)
 
   theorem sub_sub {Γ Δ Φ} {σ : Subst Γ Δ} {τ : Subst Δ Φ} {m : Γ ⊢ a}
   : ⟪τ⟫ (⟪σ⟫ m) = ⟪σ ⨟ τ⟫ m
   := by match m with
-  | ` _ => rfl
+  | ‵ _ => rfl
   | l □ m => apply congr_arg₂ Term.ap <;> exact sub_sub
   | ƛ n => calc ⟪τ⟫ (⟪σ⟫ (ƛ n))
     _ = (ƛ ⟪exts τ⟫ (⟪exts σ⟫ n)) := rfl
@@ -157,13 +162,16 @@ section
 
   -- https://plfa.github.io/Substitution/#proof-of-sub-assoc
   theorem sub_assoc : @Eq (Γ ∋ a → _) ((σ ⨟ τ) ⨟ θ) (σ ⨟ (τ ⨟ θ)) := by
-    ext; simp only [Function.comp_apply, sub_sub]
+    funext i; simp only [Function.comp_apply, sub_sub]
 
   -- https://plfa.github.io/Substitution/#proof-of-subst-zero-exts-cons
   theorem subst₁σ_exts_cons {m : Δ ⊢ b} : @Eq (Γ‚ ✶ ∋ a → _) (exts σ ⨟ subst₁σ m) (m ⦂⦂ σ) := by
-    simp only [
-      exts_cons_shift, subst_z_cons_ids, sub_dist, sub_head, sub_assoc, sub_tail, seq_ids
-    ]
+    funext i; cases i
+    · rfl
+    · rename_i x
+      change ⟪fun {a} => subst₁σ m⟫ (exts (fun {a} => σ) (.s x)) = σ x
+      simp only [exts, Subst.shift, rename_subst]
+      convert sub_ids (m := σ x) using 2
 
   variable {n : Γ‚ ✶ ⊢ ✶} {m : Γ ⊢ ✶}
 
@@ -172,8 +180,8 @@ section
       _ = ⟪subst₁σ (⟪σ⟫ m)⟫ (⟪exts σ⟫ n) := rfl
       _ = ⟪⟪σ⟫ m ⦂⦂ ids⟫ (⟪exts σ⟫ n) := by congr; simp only [subst_z_cons_ids]
       _ = ⟪(exts σ) ⨟ ((⟪σ⟫ m) ⦂⦂ ids)⟫ n := sub_sub
-      _ = ⟪(`.z ⦂⦂ (σ ⨟ shift)) ⨟ (⟪σ⟫ m ⦂⦂ ids)⟫ n := by congr; simp only [exts_cons_shift]
-      _ = ⟪⟪⟪σ⟫ m ⦂⦂ ids⟫ (`.z) ⦂⦂ ((σ ⨟ shift) ⨟ (⟪σ⟫ m ⦂⦂ ids))⟫ n := by congr; simp only [sub_dist]
+      _ = ⟪(‵ .z ⦂⦂ (σ ⨟ shift)) ⨟ (⟪σ⟫ m ⦂⦂ ids)⟫ n := by congr; simp only [exts_cons_shift]
+      _ = ⟪⟪⟪σ⟫ m ⦂⦂ ids⟫ (‵ .z) ⦂⦂ ((σ ⨟ shift) ⨟ (⟪σ⟫ m ⦂⦂ ids))⟫ n := by congr; simp only [sub_dist]
       _ = ⟪⟪σ⟫ m ⦂⦂ ((σ ⨟ shift) ⨟ (⟪σ⟫ m ⦂⦂ ids))⟫ n := rfl
       _ = ⟪⟪σ⟫ m ⦂⦂ (σ ⨟ shift ⨟ ⟪σ⟫ m ⦂⦂ ids)⟫ n := by congr; simp only [sub_assoc]
       _ = ⟪⟪σ⟫ m ⦂⦂ (σ ⨟ ids)⟫ n := by congr

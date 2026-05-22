@@ -13,7 +13,7 @@ open Untyped.Notation
 Parallel reduction.
 -/
 inductive PReduce : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
-| var : PReduce (` x) (` x)
+| var : PReduce (‵ x) (‵ x)
 | lamβ : PReduce n n' → PReduce v v' → PReduce ((ƛ n) □ v) (n'⟦v'⟧)
 | lamζ : PReduce n n' → PReduce (ƛ n) (ƛ n')
 | apξ : PReduce l l' → PReduce m m' → PReduce (l □ m) (l' □ m')
@@ -22,7 +22,7 @@ namespace PReduce
   @[refl]
   theorem refl (m : Γ ⊢ a) : PReduce m m := by
     match m with
-    | ` i => exact .var
+    | ‵ i => exact .var
     | ƛ n => apply lamζ; apply refl
     | l □ m => apply apξ <;> apply refl
 
@@ -40,14 +40,14 @@ open Notation
 
 namespace PReduce.Clos
   abbrev single (p : m ⇛ n) : (m ⇛* n) := .head p .refl
-  abbrev tail : (m ⇛* n) → (n ⇛ n') → (m ⇛* n') := .tail
-  abbrev trans : (m ⇛* n) → (n ⇛* n') → (m ⇛* n') := .trans
+  abbrev tail : (m ⇛* n) → (n ⇛ n') → (m ⇛* n') := Relation.ReflTransGen.tail
+  abbrev trans : (m ⇛* n) → (n ⇛* n') → (m ⇛* n') := Relation.ReflTransGen.trans
 
   instance : Coe (m ⇛ n) (m ⇛* n) where coe := .single
 end PReduce.Clos
 
 namespace PReduce
-  instance : IsRefl (Γ ⊢ a) PReduce where refl := .refl
+  instance {Γ a} : Std.Refl (@PReduce Γ a) where refl := .refl
 
   instance : Trans (α := Γ ⊢ a) Clos Clos Clos where trans := .trans
   instance : Trans (α := Γ ⊢ a) Clos PReduce Clos where trans c r := c.tail r
@@ -137,7 +137,7 @@ end
 Many parallel reductions at once.
 -/
 abbrev PReduce.plus : (Γ ⊢ a) → (Γ ⊢ a)
-| ` i => ` i
+| ‵ i => ‵ i
 | ƛ n => ƛ (plus n)
 | (ƛ n) □ m => plus n⟦plus m⟧
 | l □ m => plus l □ plus m
@@ -152,7 +152,7 @@ intro
 | .lamβ pn pv => exact subst_par (par_subst₁σ (par_triangle pv)) (par_triangle pn)
 | .lamζ pn => exact lamζ (par_triangle pn)
 | .apξ pl pm => rename_i l l' m m'; match l with
-  | ` _ => exact apξ (par_triangle pl) (par_triangle pm)
+  | ‵ _ => exact apξ (par_triangle pl) (par_triangle pm)
   | _ □ _ => exact apξ (par_triangle pl) (par_triangle pm)
   | ƛ _  => have .lamζ pl := pl; exact lamβ (par_triangle pl) (par_triangle pm)
 

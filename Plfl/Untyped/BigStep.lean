@@ -22,7 +22,7 @@ An environment in call-by-name is a mapping from variables to closures.
 -/
 abbrev ClosEnv (Γ : Context) := (Γ ∋ ✶) → Clos
 
-def ClosEnv.empty : ClosEnv ∅ := by intro.
+def ClosEnv.empty : ClosEnv ∅ := nofun
 
 instance ClosEnv.instEmptyCollection : EmptyCollection (ClosEnv ∅) where
   emptyCollection := empty
@@ -39,7 +39,7 @@ end Notation
 open Notation
 
 inductive Eval : ClosEnv Γ → (Γ ⊢ ✶) → Clos → Prop where
-| var : γ i = .clos m δ → Eval δ m v → Eval γ (` i) v
+| var : γ i = .clos m δ → Eval δ m v → Eval γ (‵ i) v
 | lam : Eval γ (ƛ m) (.clos (ƛ m) γ)
 | ap : Eval γ l (.clos (ƛ n) δ) → Eval (δ‚' .clos m γ) n v → Eval γ (l □ m) v
 
@@ -59,7 +59,7 @@ theorem Eval.determ (e : γ ⊢ m ⇓ v) (e' : γ ⊢ m ⇓ v') : v = v' := by
   induction e generalizing v' with cases e'
   | lam => rfl
   | var h _ ih =>
-    subst_vars; rename_i h' e'; injection h.symm.trans h'
+    rename_i h' e'; injection h.symm.trans h'
     rename_i h hh hh'; subst h; rw [←hh.eq, ←hh'.eq] at e'; exact ih e'
   | ap _ _ ih ih₁ =>
     rename_i e' e₁'; apply ih₁; injection ih e'
@@ -84,13 +84,13 @@ section
   open Untyped.Subst
   open Substitution
 
-  @[simp] lemma ClosEnv.empty_equiv_ids : ∅ ~~ₑ ids := by intro.
+  @[simp] lemma ClosEnv.empty_equiv_ids : ∅ ~~ₑ ids := nofun
 
   abbrev ext_subst (σ : Subst Γ Δ) (n : Δ ⊢ ✶) : Subst (Γ‚ ✶) Δ := (·⟦n⟧) ∘ exts σ
 
   lemma subst₁σ_exts {σ : Subst Γ Δ} {m : Δ ⊢ b} {i : Γ ∋ ✶}
   : (ext_subst σ m) (.s i) = σ i
-  := by simp only [subst₁σ_exts_cons]
+  := by simp only [subst₁σ_exts_cons]; simp_all only [cons]
 
   theorem ClosEnv.ext {γ : ClosEnv Γ} {σ : Subst Γ ∅} {n : ∅ ⊢ ✶}
   (ee : γ ~~ₑ σ) (e : v ~~ n) : (γ‚' v ~~ₑ ext_subst σ n)

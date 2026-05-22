@@ -66,7 +66,7 @@ mutual
   - `c`'s body evaluates according to `v`.
   -/
   def 𝕍 : Value → Clos → Prop
-  | _, .clos (` _) _ => ⊥
+  | _, .clos (‵ _) _ => ⊥
   | _, .clos (_ □ _) _ => ⊥
   | ⊥, .clos (ƛ _) _ => ⊤
   | vw@(v ⇾ w), .clos (ƛ n) γ =>
@@ -113,7 +113,7 @@ lemma 𝕍.of_not_gtFn (nf : ¬ GtFn v) : 𝕍 v (.clos (ƛ n) γ') := by induct
 lemma 𝕍.sub {v v'} (vvc : 𝕍 v c) (lt : v' ⊑ v) : 𝕍 v' c := by
   let .clos m γ := c; cases m with (try simp [𝕍] at *; try contradiction) | lam m =>
     rename_i Γ; induction lt generalizing Γ with
-    | bot => trivial
+    | bot => unfold 𝕍; trivial
     | conjL _ _ ih ih' => unfold 𝕍; exact ⟨ih _ _ _ vvc, ih' _ _ _ vvc⟩
     | conjR₁ _ ih => apply ih; unfold 𝕍 at vvc; exact vvc.1
     | conjR₂ _ ih => apply ih; unfold 𝕍 at vvc; exact vvc.2
@@ -150,8 +150,11 @@ theorem 𝔼.of_eval {Γ} {γ : Env Γ} {γ' : ClosEnv Γ} {m : Γ ⊢ ✶} (g :
   generalize hx : v = x at *
   induction d generalizing v with (unfold 𝔼; intro gt)
   | @var _ γ i =>
-    unfold 𝔾 𝔼 at g; have := @g i; split at this
-    have ⟨c, em', vγi⟩ := this gt; refine ⟨c, ?_, vγi⟩; apply em'.var; trivial
+    unfold 𝔾 𝔼 at g; have := @g i
+    generalize h_clos : γ' i = ci at this
+    cases ci with | clos m' δ' =>
+      have ⟨c, em', vγi⟩ := this gt; refine ⟨c, ?_, vγi⟩
+      exact BigStep.Eval.var h_clos em'
   | @ap _ _ _ _ _ m _ _ ih ih' =>
     unfold 𝔼 at ih; have ⟨.clos l' δ, e_cl', v_cl'⟩ := ih g rfl ⟨_, _, .refl⟩
     have ⟨m', h'⟩ := WHNF.of_𝕍 v_cl'; subst h'; unfold 𝕍 at v_cl'

@@ -8,7 +8,7 @@ open Subst Notation
 
 -- https://plfa.github.io/Bisimulation/#simulation
 inductive Sim : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
-| var : Sim (` x)  (` x)
+| var : Sim (‵ x)  (‵ x)
 | lam : Sim n n' → Sim (ƛ n) (ƛ n')
 | ap : Sim l l' → Sim m m' → Sim (l □ m) (l' □ m')
 | let : Sim l l' → Sim m m' → Sim (.let l m) (.let l' m')
@@ -16,7 +16,7 @@ inductive Sim : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
 namespace Sim
   scoped infix:40 " ~ " => Sim
 
-  theorem refl_dec (t : Γ ⊢ a) : Decidable (t ~ t) := by
+  noncomputable def refl_dec (t : Γ ⊢ a) : Decidable (t ~ t) := by
     cases t with try (apply isFalse; intro s; contradiction)
     | var i => exact isTrue .var
     | lam t =>

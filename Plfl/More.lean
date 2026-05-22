@@ -136,6 +136,31 @@ inductive Term : Context → Ty → Type where
 | caseList : Term Γ (.list a) → Term Γ b → Term (Γ‚ a‚ .list a) b → Term Γ b
 deriving DecidableEq, Repr
 
+@[simp]
+def Term.size : Term Γ a → Nat
+  | .var _ => 1
+  | .lam t => t.size + 1
+  | .ap l m => l.size + m.size + 1
+  | .zero => 1
+  | .succ t => t.size + 1
+  | .case l m n => l.size + m.size + n.size + 1
+  | .mu t => t.size + 1
+  | .prim _ => 1
+  | .mulP m n => m.size + n.size + 1
+  | .let m n => m.size + n.size + 1
+  | .prod m n => m.size + n.size + 1
+  | .fst t => t.size + 1
+  | .snd t => t.size + 1
+  | .left t => t.size + 1
+  | .right t => t.size + 1
+  | .caseSum s l r => s.size + l.size + r.size + 1
+  | .caseVoid v => v.size + 1
+  | .unit => 1
+  | .nil => 1
+  | .cons m n => m.size + n.size + 1
+  | .caseList l m n => l.size + m.size + n.size + 1
+
+
 namespace Notation
   open Term
 
@@ -148,13 +173,13 @@ namespace Notation
   scoped infixl:70 " □ " => ap
   scoped infixl:70 " ⋄ "   => mulP
   scoped prefix:80 "ι " => succ
-  scoped prefix:90 "` " => var
+  scoped prefix:90 "‵" => var
 
   scoped notation "𝟘" => zero
   scoped notation "◯" => unit
 
   -- https://plfa.github.io/DeBruijn/#abbreviating-de-bruijn-indices
-  scoped macro "#" n:term:90 : term => `(`♯$n)
+  scoped macro "#" n:term:90 : term => `(‵♯$n)
 end Notation
 
 namespace Term
@@ -215,7 +240,7 @@ namespace Subst
   -/
   def rename : (∀ {a}, Γ ∋ a → Δ ∋ a) → Γ ⊢ a → Δ ⊢ a := by
     intro ρ; intro
-    | ` x => exact ` (ρ x)
+    | ‵ x => exact ‵ (ρ x)
     | ƛ n => exact ƛ (rename (ext ρ) n)
     | l □ m => exact rename ρ l □ rename ρ m
     | 𝟘 => exact 𝟘
@@ -252,7 +277,7 @@ namespace Subst
   -/
   def exts : (∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ‚ b ∋ a → Δ‚ b ⊢ a := by
     intro σ; intro
-    | .z => exact `.z
+    | .z => exact ‵.z
     | .s x => apply shift; exact σ x
 
   /--
@@ -263,7 +288,7 @@ namespace Subst
   -/
   def subst : (∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ ⊢ a → Δ ⊢ a := by
     intro σ; intro
-    | ` i => exact σ i
+    | ‵ i => exact σ i
     | ƛ n => exact ƛ (subst (exts σ) n)
     | l □ m => exact subst σ l □ subst σ m
     | 𝟘 => exact 𝟘
@@ -288,7 +313,7 @@ namespace Subst
   abbrev subst₁σ (v : Γ ⊢ b) : ∀ {a}, Γ‚ b ∋ a → Γ ⊢ a := by
     introv; intro
     | .z => exact v
-    | .s x => exact ` x
+    | .s x => exact ‵ x
 
   /--
   Substitution for one free variable `v` in the term `n`.
@@ -303,7 +328,7 @@ namespace Subst
     refine subst ?_ n; introv; intro
     | .z => exact w
     | .s .z => exact v
-    | .s (.s x) => exact ` x
+    | .s (.s x) => exact ‵ x
 end Subst
 
 namespace Notation
@@ -420,10 +445,10 @@ namespace Notation
 end Notation
 
 namespace Reduce.Clos
-  abbrev refl : m —↠ m := .refl
-  abbrev tail : (m —↠ n) → (n —→ n') → (m —↠ n') := .tail
-  abbrev head : (m —→ n) → (n —↠ n') → (m —↠ n') := .head
-  abbrev single : (m —→ n) → (m —↠ n) := .single
+  abbrev refl : m —↠ m := Relation.ReflTransGen.refl
+  abbrev tail : (m —↠ n) → (n —→ n') → (m —↠ n') := Relation.ReflTransGen.tail
+  abbrev head : (m —→ n) → (n —↠ n') → (m —↠ n') := Relation.ReflTransGen.head
+  abbrev single : (m —→ n) → (m —↠ n) := Relation.ReflTransGen.single
 
   instance : Coe (m —→ n) (m —↠ n) where coe r := .single r
 
@@ -440,12 +465,15 @@ namespace Reduce
     twoC □ succC □ 𝟘
     _ —→ (ƛ (succC $ succC $ #0)) □ 𝟘 := by apply apξ₁; apply lamβ; exact Value.lam
     _ —→ (succC $ succC $ 𝟘) := by apply lamβ; exact V𝟘
-    _ —→ succC □ 1 := by apply apξ₂; apply Value.lam; exact lamβ V𝟘
-    _ —→ 2 := by apply lamβ; exact Value.ofNat 1
+    _ —→ succC □ 1 := by
+      apply apξ₂
+      · apply Value.lam
+      · unfold succC; exact lamβ V𝟘
+    _ —→ 2 := by unfold succC; apply lamβ; exact Value.ofNat 1
 end Reduce
 
 -- https://plfa.github.io/DeBruijn/#values-do-not-reduce
-def Value.not_reduce : Value m → ∀ {n}, ¬ m —→ n := by
+theorem Value.not_reduce : Value m → ∀ {n}, ¬ m —→ n := by
   introv v; intro r
   cases v with try contradiction
   | succ v => cases r; · case succξ => apply not_reduce v; trivial
@@ -458,7 +486,7 @@ def Value.not_reduce : Value m → ∀ {n}, ¬ m —→ n := by
     | consξ₁ r => rename_i v _ _; apply not_reduce v; trivial
     | consξ₂ r => rename_i v _; apply not_reduce v; trivial
 
-def Reduce.empty_value : m —→ n → IsEmpty (Value m) := by
+theorem Reduce.empty_value : m —→ n → IsEmpty (Value m) := by
   intro r; is_empty; intro v; exact Value.not_reduce v r
 
 /--
@@ -470,7 +498,7 @@ inductive Progress (m : ∅ ⊢ a) where
 
 def Progress.progress : (m : ∅ ⊢ a) → Progress m := open Reduce in by
   intro
-  | ` _ => contradiction
+  | ‵ _ => contradiction
   | ƛ _ => exact .done .lam
   | l □ m => match progress l with
     | .step _ => apply step; apply apξ₁; trivial

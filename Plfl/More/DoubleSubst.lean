@@ -32,14 +32,14 @@ lemma exts_comp {ρ : ∀ {a}, Γ ∋ a → Δ ∋ a} {σ : ∀ {a}, Δ ∋ a �
 := by cases i <;> rfl
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L87
-lemma exts_var (i : Γ‚ b ∋ a) : exts var i = ` i := by cases i <;> rfl
+lemma exts_var (i : Γ‚ b ∋ a) : exts var i = ‵ i := by cases i <;> rfl
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L73
 lemma subst_comp {ρ : ∀ {a}, Γ ∋ a → Δ ∋ a} {σ : ∀ {a}, Δ ∋ a → Φ ⊢ a} (t : Γ ⊢ a)
 : subst σ (rename ρ t) = subst (σ ∘ ρ) t
 := by
   match t with
-  | ` i => trivial
+  | ‵ i => trivial
   | ƛ t =>
     apply congr_arg lam; rw [subst_comp t]
     conv_lhs => arg 1; ext a t; simp only [Function.comp_apply, exts_comp t]
@@ -84,7 +84,7 @@ lemma subst_comp {ρ : ∀ {a}, Γ ∋ a → Δ ∋ a} {σ : ∀ {a}, Δ ∋ a �
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L93
 lemma subst_var (t : Γ ⊢ a) : subst var t = t := by
   match t with
-  | ` i => apply congr_arg var; trivial
+  | ‵ i => apply congr_arg var; trivial
   | ƛ t =>
     apply congr_arg lam
     conv_lhs => arg 1; ext a i; rw [exts_var i]
@@ -129,8 +129,8 @@ lemma subst_var (t : Γ ⊢ a) : subst var t = t := by
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L104
 theorem subst₁_shift : (shift (t : Γ ⊢ a))⟦(t' : Γ ⊢ b)⟧ = t := by
-  simp_all only [subst₁, subst₁σ, subst_comp]
-  conv_lhs => arg 1; ext a t'; simp
+  simp only [subst₁, subst_comp]
+  change subst var t = t
   rw [subst_var]
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L112
@@ -153,7 +153,7 @@ lemma insert_twice {Γ Δ Φ : Context} {a b c : Ty} (t : Γ‚‚ Δ‚‚ Φ �
 = (rename (ext' (ext (ext' .s))) (rename (ext' .s) t) : (Γ‚ b‚‚ Δ)‚ c‚‚ Φ ⊢ a)
 := by
   match t with
-  | ` i => apply congr_arg var; exact insert_twice_idx i
+  | ‵ i => apply congr_arg var; exact insert_twice_idx i
   | ƛ t => apply congr_arg lam; rename_i a' b'; exact insert_twice (Φ := Φ‚ a') t
   | l □ m => apply congr_arg₂ ap <;> apply insert_twice
   | 𝟘 => trivial
@@ -183,6 +183,7 @@ lemma insert_twice {Γ Δ Φ : Context} {a b c : Ty} (t : Γ‚‚ Δ‚‚ Φ �
   | .caseList l m n =>
     apply congr_arg₃ caseList <;> try apply insert_twice
     · rename_i a'; exact insert_twice (Φ := Φ‚ a'‚ .list a') n
+termination_by t.size
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L132
 lemma insert_subst_idx
@@ -207,7 +208,7 @@ lemma insert_subst
 = rename (ext' .s) (subst (exts' σ) t)
 := by
   match t with
-  | ` i => exact insert_subst_idx i
+  | ‵ i => exact insert_subst_idx i
   | ƛ t => rename_i a b; apply congr_arg lam; exact insert_subst (Φ := Φ‚ a) t
   | l □ m => apply congr_arg₂ ap <;> apply insert_subst
   | 𝟘 => trivial
@@ -237,6 +238,7 @@ lemma insert_subst
   | .caseList l m n =>
     apply congr_arg₃ caseList <;> try apply insert_subst
     · rename_i a'; exact insert_subst (Φ := Φ‚ a'‚ .list a') n
+termination_by t.size
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L154
 lemma shift_subst
@@ -262,7 +264,7 @@ theorem subst_subst_comp
 : subst σ' (subst σ t) = subst (subst σ' ∘ σ) t
 := by
   match t with
-  | ` _ => trivial
+  | ‵ _ => trivial
   | ƛ t =>
     apply congr_arg lam
     rw [subst_subst_comp (σ := exts σ) (σ' := exts σ') t]
@@ -317,5 +319,5 @@ theorem double_subst
   simp only [subst₂, subst₁, subst_subst_comp]; congr; ext
   simp only [Function.comp_apply, subst₁σ]; split
   · simp only [subst₁_shift]
-  · simp only [shift_subst]; rfl
-  · simp only [shift_subst]; rfl
+  · rfl
+  · rfl

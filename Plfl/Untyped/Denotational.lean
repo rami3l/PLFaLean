@@ -18,7 +18,7 @@ deriving BEq, DecidableEq, Repr
 
 namespace Value
   instance instBot : Bot Value where bot := .bot
-  instance instSup : Sup Value where sup := .conj
+  instance instMax : Max Value where max := .conj
 end Value
 
 namespace Notation
@@ -119,7 +119,7 @@ end Env
 
 namespace Notation
   instance : Bot (Env Γ) where bot _ := ⊥
-  instance : Sup (Env γ) where sup := Env.conj
+  instance : Max (Env Γ) where max := Env.conj
 
   scoped infix:40 " `⊑ " => Env.Sub
 end Notation
@@ -143,7 +143,7 @@ end Env.Sub
 `Eval γ m v` means that evaluating the term `m` in the environment `γ` gives `v`.
 -/
 inductive Eval : Env Γ → (Γ ⊢ ✶) → Value → Prop where
-| var : Eval γ (` i) (γ i)
+| var : Eval γ (‵ i) (γ i)
 | ap : Eval γ l (v ⇾ w) → Eval γ m v → Eval γ (l □ m) w
 | fn {v w} : Eval (γ`‚ v) n w → Eval γ (ƛ n) (v ⇾ w)
 | bot : Eval γ m ⊥
@@ -276,18 +276,18 @@ A path consists of `n` edges (`⇾`s) and `n + 1` vertices (`Value`s).
 -/
 def Value.path : (n : ℕ) → Vector Value (n + 1) → Value
 | 0, _ => ⊥
-| i + 1, vs => path i vs.dropLast ⊔ vs.get i ⇾ vs.get (i + 1)
+| i + 1, vs => path i vs.dropLast ⊔ vs[i] ⇾ vs[i + 1]
 
 /--
 Returns the denotation of the nth Church numeral for a given path.
 -/
 def Value.church (n : ℕ) (vs : Vector Value (n + 1)) : Value :=
-  path n vs ⇾ vs.get 0 ⇾ vs.get n
+  path n vs ⇾ vs[0] ⇾ vs[n]
 
 namespace Example
-  example : Value.church 0 ⟨[u], rfl⟩ = (⊥ ⇾ u ⇾ u) := rfl
-  example : Value.church 1 ⟨[u, v], rfl⟩ = ((⊥ ⊔ u ⇾ v) ⇾ u ⇾ v) := rfl
-  example : Value.church 2 ⟨[u, v, w], rfl⟩ = ((⊥ ⊔ u ⇾ v ⊔ v ⇾ w) ⇾ u ⇾ w) := rfl
+  example : Value.church 0 #v[u] = (⊥ ⇾ u ⇾ u) := rfl
+  example : Value.church 1 #v[u, v] = ((⊥ ⊔ u ⇾ v) ⇾ u ⇾ v) := rfl
+  example : Value.church 2 #v[u, v, w] = ((⊥ ⊔ u ⇾ v ⊔ v ⇾ w) ⇾ u ⇾ w) := rfl
 end Example
 
 section
@@ -297,16 +297,20 @@ section
 
   def denot_church {vs} : `∅ ⊢ church n ￬ Value.church n vs := by
     apply_rules [fn]; induction n with
-    | zero => let ⟨_ :: [], _⟩ := vs; exact var
+    | zero => exact var
     | succ n r =>
       unfold church.applyN; apply ap
       · apply sub var; simp only [Env.snoc, Value.path]; convert Sub.refl.conjR₂
-        rw [←Fin.instAddMonoidWithOne.proof_2]
       · convert sub_env (@r vs.dropLast) ?_ using 1
-        · simp only [vs.get_dropLast n, Fin.coe_ofNat_eq_mod]
-          congr; simp_arith [Nat.mod_eq_of_lt]
-        · simp only [vs.get_dropLast 0, Fin.coe_ofNat_eq_mod]
-          apply_rules [le_ext, ext_le]; exact .conjR₁ .refl
+        · exact (Vector.get_dropLast vs ⟨n, by omega⟩).symm
+        · intro x; cases x with
+          | z =>
+            have : vs.dropLast[0] = vs[0] := by exact Vector.get_dropLast vs ⟨0, by omega⟩
+            exact this ▸ Sub.refl
+          | s i =>
+            cases i with
+            | z => exact .conjR₁ .refl
+            | s i' => cases i'
 end
 
 -- https://plfa.github.io/Denotational/#inversion-of-the-less-than-relation-for-functions
@@ -314,7 +318,7 @@ def Value.Elem (u v : Value) : Prop := match v with
 | .conj v w => u.Elem v ∨ u.Elem w
 | v => u = v
 
-instance Value.membership : Membership Value Value where mem := Value.Elem
+instance Value.membership : Membership Value Value where mem y x := Value.Elem x y
 
 namespace Value
   def Included (v w : Value) : Prop := ∀ {u}, u ∈ v → u ∈ w
@@ -325,23 +329,26 @@ namespace Value
   instance : Trans Subset Subset Included where trans := instTrans.trans
 
   variable {u v w : Value}
-  def Included.fst (s : Included (u ⊔ v) w) : u ⊆ w := s ∘ .inl
-  def Included.snd (s : Included (u ⊔ v) w) : v ⊆ w := s ∘ .inr
+  def Included.fst (s : Included (u ⊔ v) w) : u ⊆ w := fun h => s (Or.inl h)
+  def Included.snd (s : Included (u ⊔ v) w) : v ⊆ w := fun h => s (Or.inr h)
 end Value
 
-theorem sub_of_elem (e : u ∈ v) : u ⊑ v := by induction v with cases e
-| bot => exact .bot
-| fn => rfl
-| conj _ _ ih ih' =>
-  all_goals (rename_i h; first | exact (ih h).conjR₁ | exact (ih' h).conjR₂)
+theorem sub_of_elem (e : u ∈ v) : u ⊑ v := by
+  induction v with
+  | bot => subst e; exact .bot
+  | fn v w => subst e; exact .refl
+  | conj v w ih ih' =>
+    rcases e with h | h
+    · exact .conjR₁ (ih h)
+    · exact .conjR₂ (ih' h)
 
 theorem sub_of_included (s : u ⊆ v) : u ⊑ v := by induction u with
 | bot => exact .bot
 | fn => apply sub_of_elem; apply s; rfl
 | conj _ _ ih ih' =>
   apply Sub.conjL
-  · apply ih; intro _ e; apply s; left; exact e
-  · apply ih'; intro _ e; apply s; right; exact e
+  · apply ih; intro _ e; apply s; exact Or.inl e
+  · apply ih'; intro _ e; apply s; exact Or.inr e
 
 theorem conj_included_inv {u v w : Value} (s : u ⊔ v ⊆ w) : u ⊆ w ∧ v ⊆ w := by
   constructor <;> (intro _ _; apply s; first | left; trivial | right; trivial)
@@ -356,19 +363,19 @@ inductive IsFn (u : Value) : Prop where | isFn (h : u = v ⇾ w)
 def AllFn (v : Value) : Prop := ∀ {u}, u ∈ v → IsFn u
 
 namespace AllFn
-  def fst (f : AllFn (u ⊔ v)) : AllFn u := f ∘ .inl
-  def snd (f : AllFn (u ⊔ v)) : AllFn v := f ∘ .inr
+  def fst (f : AllFn (u ⊔ v)) : AllFn u := fun h => f (Or.inl h)
+  def snd (f : AllFn (u ⊔ v)) : AllFn v := fun h => f (Or.inr h)
 end AllFn
 
 lemma not_isFn_bot : ¬ IsFn ⊥ := nofun
 
 lemma elem_of_allFn (f : AllFn u) : ∃ v w, v ⇾ w ∈ u := by induction u with
-| bot => exact (not_isFn_bot <| f rfl).elim
+| bot => exact (not_isFn_bot <| f (u := ⊥) rfl).elim
 | fn v w => exists v, w
 | conj v w ih _ =>
   -- In fact, the proof is also possible on the `.snd` side.
   -- There is some information loss in this step.
-  have ⟨v, w, i⟩ := ih f.fst; exists v, w; left; exact i
+  have ⟨v, w, i⟩ := ih f.fst; exists v, w; exact Or.inl i
 
 -- https://plfa.github.io/Denotational/#domains-and-codomains
 /-- Given a set `u` of functions, `u.conjDom` returns the join of their domains. -/
@@ -386,22 +393,29 @@ def Value.conjCodom : Value → Value
 /-- Given an element `v ⇾ w` of a set of functions `u`, we know that `v` is in `u.conjDom`. -/
 theorem included_conjDom (f : AllFn u) (i : v ⇾ w ∈ u) : v ⊆ u.conjDom := by induction u with
 | bot => cases i
-| fn => cases i; exact id
-| conj u u' ih ih' => match i with
-  | .inl h => calc v
-    _ ⊆ u.conjDom := ih f.fst h
-    _ ⊆ (u ⊔ u').conjDom := .inl
-  | .inr h => calc v
-    _ ⊆ u'.conjDom := ih' f.snd h
-    _ ⊆ (u ⊔ u').conjDom := .inr
+| fn => cases i; intro _ hx; exact hx
+| conj u u' ih ih' =>
+  rcases i with h | h
+  · calc v
+      _ ⊆ u.conjDom := ih f.fst h
+      _ ⊆ (u ⊔ u').conjDom := fun h => Or.inl h
+  · calc v
+      _ ⊆ u'.conjDom := ih' f.snd h
+      _ ⊆ (u ⊔ u').conjDom := fun h => Or.inr h
 
 /-- Given a set `u` of identical terms `v ⇾ w`, we know that `u.conjCodom` is included in `w`. -/
 theorem conjCodom_included (s : u ⊆ v ⇾ w) : u.conjCodom ⊆ w := by induction u with
-| bot => cases s rfl
-| fn => cases s rfl; exact id
-| conj _ _ ih ih' => intro x; intro
-  | .inl i => exact ih s.fst i
-  | .inr i => exact ih' s.snd i
+| bot =>
+  have h := s (u := ⊥) rfl
+  cases h
+| fn u₁ u₂ =>
+  have h := s (u := u₁ ⇾ u₂) rfl
+  cases h; intro _ hx; exact hx
+| conj _ _ ih ih' =>
+  intro x h
+  rcases h with i | i
+  · exact ih s.fst i
+  · exact ih' s.snd i
 
 /--
 We say that `v ⇾ w` factors `u` into `u`, if:
@@ -420,13 +434,20 @@ def Factor (u u' v w : Value) : Prop :=
 theorem sub_inv (lt : u ⊑ u') {v w} (i : v ⇾ w ∈ u) : ∃ u'', Factor u' u'' v w :=
   by induction lt generalizing v w with
   | bot => cases i
-  | conjL _ _ ih ih' => exact i.elim ih ih'
-  | conjR₁ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, .inl ∘ s
-  | conjR₂ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, .inr ∘ s
-  | fn lt lt' => cases i; rename_i v v' w' w _ _; exists v ⇾ w, .isFn, id
+  | conjL _ _ ih ih' =>
+    rcases i with h | h
+    · exact ih h
+    · exact ih' h
+  | conjR₁ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, fun h => Or.inl (s h)
+  | conjR₂ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, fun h => Or.inr (s h)
+  | fn lt lt' => cases i; rename_i v v' w' w _ _; exists v ⇾ w, (fun h => IsFn.isFn h), id
   | dist =>
     cases i; rename_i v w w'; exists v ⇾ w ⊔ v ⇾ w'
-    refine ⟨(Or.elim · .isFn .isFn), id, ?_, .refl⟩; exact .conjL .refl .refl
+    refine ⟨?_, id, ?_, .refl⟩
+    · intro _ h; rcases h with h' | h'
+      · exact .isFn h'
+      · exact .isFn h'
+    · exact .conjL .refl .refl
   | trans _ _ ih ih' =>
     rename_i u' v' w'; have ⟨u'', f, s, ss⟩ := ih i; have ⟨u'', f, s, ss'⟩ := trans f s ih'
     exists u'', f, s; exact ⟨ss'.1.trans ss.1, ss.2.trans ss'.2⟩
@@ -435,13 +456,19 @@ theorem sub_inv (lt : u ⊑ u') {v w} (i : v ⇾ w ∈ u) : ∃ u'', Factor u' u
     trans {u u₁ u₂} (f : AllFn u₁) (s : u₁ ⊆ u) (ih : ∀ {v w}, v ⇾ w ∈ u → ∃ u₃, Factor u₂ u₃ v w)
     : ∃ u₃, Factor u₂ u₃ u₁.conjDom u₁.conjCodom
     := by induction u₁ with
-    | bot => exfalso; apply not_isFn_bot; exact f rfl
+    | bot => exfalso; apply not_isFn_bot; exact f (u := ⊥) rfl
     | fn => apply ih; apply fn_elem; exact s
     | conj _ _ ih ih' =>
       have ⟨s, s'⟩ := conj_included_inv s
       have ⟨u₃, f₃, s, ss⟩ := ih f.fst s; have ⟨u₃', f₃', s', ss'⟩ := ih' f.snd s'
-      exists u₃ ⊔ u₃', (Or.elim · f₃ f₃'), (Or.elim · s s')
-      exact ⟨conj_sub_conj ss.1 ss'.1, conj_sub_conj ss.2 ss'.2⟩
+      exists u₃ ⊔ u₃'
+      refine ⟨?_, ?_, conj_sub_conj ss.1 ss'.1, conj_sub_conj ss.2 ss'.2⟩
+      · intro _ h; rcases h with h' | h'
+        · exact f₃ h'
+        · exact f₃' h'
+      · intro _ h; rcases h with h' | h'
+        · exact s h'
+        · exact s' h'
 
 lemma sub_inv_fn (lt : v ⇾ w ⊑ u)
 : ∃ u',

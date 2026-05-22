@@ -78,11 +78,11 @@ namespace Term
   infixr:min " $ " => ap
   infixl:70 " □ " => ap
   prefix:80 "ι " => succ
-  prefix:90 "` " => var
+  prefix:90 "‵" => var
   notation "𝟘" => zero
 
   -- https://plfa.github.io/DeBruijn/#abbreviating-de-bruijn-indices
-  macro "# " n:term:90 : term => `(`♯$n)
+  macro "# " n:term:90 : term => `(‵ ♯$n)
 
   example : ∅‚ ℕt =⇒ ℕt‚ ℕt ⊢ ℕt := #0
   example : ∅‚ ℕt =⇒ ℕt‚ ℕt ⊢ ℕt =⇒ ℕt := #1
@@ -137,7 +137,7 @@ then the type judgements are the same in both contexts.
 -/
 def rename : (∀ {a}, Γ ∋ a → Δ ∋ a) → Γ ⊢ a → Δ ⊢ a := by
   intro ρ; intro
-  | ` x => exact ` (ρ x)
+  | ‵ x => exact ‵ (ρ x)
   | ƛ n => refine .lam ?_; refine rename ?_ n; exact ext ρ
   | l □ m =>
     apply Term.ap
@@ -165,7 +165,7 @@ the mapping holds after adding the same variable to both contexts.
 -/
 def exts : (∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ‚ b ∋ a → Δ‚ b ⊢ a := by
   intro σ; intro
-  | .z => exact `.z
+  | .z => exact ‵.z
   | .s x => apply rename .s; exact σ x
 
 /--
@@ -176,7 +176,7 @@ i.e. after replacing the free variables in the former with (expanded) terms.
 -/
 def subst : (∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ ⊢ a → Δ ⊢ a := by
   intro σ; intro
-  | ` x => exact σ x
+  | ‵ x => exact σ x
   | ƛ n => refine .lam ?_; refine subst ?_ n; exact exts σ
   | l □ m =>
     apply Term.ap
@@ -197,7 +197,7 @@ Substitution for one free variable `m` in the term `n`.
 abbrev subst₁ (m : Γ ⊢ b) (n : Γ‚ b ⊢ a) : Γ ⊢ a := by
   refine subst ?_ n; introv; intro
   | .z => exact m
-  | .s x => exact ` x
+  | .s x => exact ‵ x
 
 notation:90 n "⟦" m "⟧" => subst₁ m n
 
@@ -295,17 +295,20 @@ namespace Reduce
     twoC □ succC □ 𝟘
     _ —→ (ƛ (succC $ succC $ #0)) □ 𝟘 := by apply apξ₁; apply lamβ; exact Value.lam
     _ —→ (succC $ succC $ 𝟘) := by apply lamβ; exact V𝟘
-    _ —→ succC □ 1 := by apply apξ₂; apply Value.lam; exact lamβ V𝟘
-    _ —→ 2 := by apply lamβ; exact Value.ofNat 1
+    _ —→ succC □ 1 := by
+      apply apξ₂
+      · apply Value.lam
+      · unfold succC; exact lamβ V𝟘
+    _ —→ 2 := by unfold succC; apply lamβ; exact Value.ofNat 1
 end Reduce
 
 -- https://plfa.github.io/DeBruijn/#values-do-not-reduce
-def Value.empty_reduce : Value m → ∀ {n}, IsEmpty (m —→ n) := by
+theorem Value.empty_reduce : Value m → ∀ {n}, IsEmpty (m —→ n) := by
   introv v; is_empty; intro r
   cases v <;> try contradiction
   · case succ v => cases r; · case succξ => apply (empty_reduce v).false; trivial
 
-def Reduce.empty_value : m —→ n → IsEmpty (Value m) := by
+theorem Reduce.empty_value : m —→ n → IsEmpty (Value m) := by
   intro r; is_empty; intro v
   have : ∀ {n}, IsEmpty (m —→ n) := Value.empty_reduce v
   exact this.false r
@@ -319,7 +322,7 @@ inductive Progress (m : ∅ ⊢ a) where
 
 def progress : (m : ∅ ⊢ a) → Progress m := open Progress Reduce in by
   intro
-  | ` _ => contradiction
+  | ‵ _ => contradiction
   | ƛ _ => exact .done Value.lam
   | jl □ jm => cases progress jl with
     | step => apply step; · apply apξ₁; trivial

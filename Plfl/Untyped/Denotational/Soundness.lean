@@ -47,7 +47,7 @@ section
   -- https://plfa.github.io/Soundness/#single-substitution-preserves-denotations
   /-- The result of evaluation is conserved after single substitution. -/
   theorem subst₁_pres (dn : γ`‚ v ⊢ n ￬ w) (dm : γ ⊢ m ￬ v) : γ ⊢ n⟦m⟧ ￬ w
-  := subst_pres (subst₁σ m) (λ | .z => dm | .s _ => .var) dn
+  := subst_pres (σ := subst₁σ m) (γ := γ`‚ v) (δ := γ) (λ | .z => dm | .s _ => .var) dn
 
   -- https://plfa.github.io/Soundness/#reduction-preserves-denotations
   theorem reduce_pres (d : γ ⊢ m ￬ v) (r : m —→ n) : γ ⊢ n ￬ v := by induction d with
@@ -89,13 +89,13 @@ section
   variable {γ δ : Env Δ}
 
   lemma subst_reflect_var {i : Γ ∋ ✶} {σ : Subst Γ Δ} (d : γ ⊢ σ i ￬ v)
-  : ∃ (δ : Env Γ), (γ `⊢ σ ￬ δ) ∧ (δ ⊢ ` i ￬ v)
+  : ∃ (δ : Env Γ), (γ `⊢ σ ￬ δ) ∧ (δ ⊢ ‵ i ￬ v)
   := by
     exists Env.const i v; unfold Env.const; constructor
     · intro j; by_cases h : i = j <;> simp only [h] at *
       · exact d
       · exact .bot
-    · convert Eval.var; simp only [Env.const, ite_true]
+    · convert Eval.var; simp only [ite_true]
 
   variable {γ₁ γ₂ : Env Γ} {σ : Subst Γ Δ}
 
