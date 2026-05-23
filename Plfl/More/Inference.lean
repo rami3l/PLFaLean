@@ -445,20 +445,20 @@ example : four''.infer ∅ = .inr ⟨ℕt, four''Ty⟩ := by rfl
 -- https://plfa.github.io/Inference/#testing-the-error-cases
 
 /-
-Sadly this won't work for now due to limitations with mutual recursions.
+This didn't work for before due to limitations with mutual recursions.
 See: <https://leanprover.zulipchat.com/#narrow/stream/113489-new-members/topic/.E2.9C.94.20Proof.20of.20an.20inductive's.20variant.3F/near/358901115>
 -/
 
--- example := show ((ƛ "x" : ‵"y").the (ℕt =⇒ ℕt)).infer ∅ = .inl _ by rfl
+example := show ((ƛ "x" : ‵"y").the (ℕt =⇒ ℕt)).infer ∅ = .inl _ by rfl
 
 /-
-This won't work either, probably due to similar reasons...
+This didn't work either, probably due to similar reasons...
 -/
 
--- instance : Decidable (Nonempty (Σ a, Γ ⊢ m ⇡ a)) := (m.infer Γ).toDecidable
+instance : Decidable (Nonempty (Σ a, Γ ⊢ m ⇡ a)) := (m.infer Γ).toDecidable
 
--- example := let m := (ƛ "x" : ‵"y").the (ℕt =⇒ ℕt); show IsEmpty (Σ a, ∅ ⊢ m ⇡ a) by
---   rw [←not_nonempty_iff]; decide
+example := let m := (ƛ "x" : ‵"y").the (ℕt =⇒ ℕt); show IsEmpty (Σ a, ∅ ⊢ m ⇡ a) by
+  rw [←not_nonempty_iff]; decide
 
 -- Unbound variable:
 /--
