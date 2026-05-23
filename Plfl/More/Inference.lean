@@ -563,7 +563,7 @@ example : fourTy.erase (Γ := ∅) = More.Term.four := by rfl
 -- https://plfa.github.io/Inference/#exercise-inference-multiplication-recommended
 example : mul.infer ∅ = .inr ⟨ℕt =⇒ ℕt =⇒ ℕt, mulTy⟩ := by rfl
 
--- ! BOOM! The commented lines below are very CPU/RAM-intensive, and might even make LEAN4 leak memory!
--- example : mulTy.erase (Γ := ∅) = More.Term.mul := by rfl
--- example : four'Ty.erase (Γ := ∅) = More.Term.four' := by rfl
--- example : four''Ty.erase (Γ := ∅) = More.Term.four'' := by rfl
+-- ! BOOM! The commented lines below were very CPU/RAM-intensive, and might even make LEAN4 leak memory!
+example : mulTy.erase (Γ := ∅) = More.Term.mul := by rfl
+example : four'Ty.erase (Γ := ∅) = More.Term.four' := by rfl
+example : four''Ty.erase (Γ := ∅) = More.Term.four'' := by rfl
