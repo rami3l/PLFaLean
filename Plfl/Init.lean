@@ -31,12 +31,3 @@ theorem congr_arg₃
 (hx : x = x') (hy : y = y') (hz : z = z')
 : f x y z = f x' y' z'
 := by subst hx hy hz; rfl
-
-namespace Vector
-  def dropLast (v : Vector α n) : Vector α (n - 1) := v.pop
-
-  theorem get_dropLast (v : Vector α (n + 1)) (i : Fin n)
-  -- : v.dropLast[i] = v[i.val]'(by omega)
-  : v.dropLast.get i = v.get ⟨i.val, by omega⟩
-  := by simp [dropLast, Vector.get, Vector.pop]
-end Vector

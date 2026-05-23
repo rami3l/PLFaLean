@@ -280,7 +280,7 @@ A path consists of `n` edges (`⇾`s) and `n + 1` vertices (`Value`s).
 -/
 def Value.path : (n : ℕ) → Vector Value (n + 1) → Value
 | 0, _ => ⊥
-| i + 1, vs => path i vs.dropLast ⊔ vs[i] ⇾ vs[i + 1]
+| i + 1, vs => path i vs.pop ⊔ vs[i] ⇾ vs[i + 1]
 
 /--
 Returns the denotation of the nth Church numeral for a given path.
@@ -305,12 +305,12 @@ section
     | succ n r =>
       unfold church.applyN; apply ap
       · apply sub var; simp only [Env.snoc, Value.path]; convert Sub.refl.conjR₂
-      · convert sub_env (@r vs.dropLast) ?_ using 1
-        · exact (Vector.get_dropLast vs ⟨n, by omega⟩).symm
+      · convert sub_env (@r vs.pop) ?_ using 1
+        · simp_all only [List.empty_eq, Vector.getElem_pop']
         · intro x; cases x with
           | z =>
-            have : vs.dropLast[0] = vs[0] := by exact Vector.get_dropLast vs ⟨0, by omega⟩
-            exact this ▸ Sub.refl
+            simp_all only [List.empty_eq, Vector.getElem_pop']
+            rfl
           | s i =>
             cases i with
             | z => exact .conjR₁ .refl
