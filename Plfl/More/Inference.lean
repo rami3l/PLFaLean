@@ -1,7 +1,11 @@
+module
+
 -- https://plfa.github.io/Inference/
 
-import Plfl.Init
-import Plfl.More
+public meta import Plfl.Init
+public import Plfl.More
+
+@[expose] public section
 
 namespace Inference
 
@@ -180,7 +184,10 @@ end Notation
 
 instance : Repr (Γ ∋ m ⦂ a) where reprPrec i n := "♯" ++ reprPrec n (sizeOf i)
 
-#eval @Lookup.z (∅‚ "x" ⦂ ℕt) "x" ℕt
+/--
+info: ♯0
+-/
+#guard_msgs in #eval @Lookup.z (∅‚ "x" ⦂ ℕt) "x" ℕt
 
 mutual
   /--
@@ -454,37 +461,70 @@ This won't work either, probably due to similar reasons...
 --   rw [←not_nonempty_iff]; decide
 
 -- Unbound variable:
-#eval ((ƛ "x" : ‵"y").the (ℕt =⇒ ℕt)).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval ((ƛ "x" : ‵"y").the (ℕt =⇒ ℕt)).infer ∅
 
 -- Argument in application is ill typed:
-#eval (add □ succC).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval (add □ succC).infer ∅
 
 -- Function in application is ill typed:
-#eval (add □ succC □ two).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval (add □ succC □ two).infer ∅
 
 -- Function in application has type natural:
-#eval (two.the ℕt □ two).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval (two.the ℕt □ two).infer ∅
 
 -- Abstraction inherits type natural:
-#eval (twoC.the ℕt).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval (twoC.the ℕt).infer ∅
 
 -- Zero inherits a function type:
-#eval (𝟘.the (ℕt =⇒ ℕt)).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval (𝟘.the (ℕt =⇒ ℕt)).infer ∅
 
 -- Successor inherits a function type:
-#eval (two.the (ℕt =⇒ ℕt)).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval (two.the (ℕt =⇒ ℕt)).infer ∅
 
 -- Successor of an ill-typed term:
-#eval ((ι twoC).the ℕt).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval ((ι twoC).the ℕt).infer ∅
 
 -- Case of a term with a function type:
-#eval ((𝟘? twoC.the Ch [zero: 𝟘 |succ "x" : ‵"x"]).the ℕt).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval ((𝟘? twoC.the Ch [zero: 𝟘 |succ "x" : ‵"x"]).the ℕt).infer ∅
 
 -- Case of an ill-typed term:
-#eval ((𝟘? twoC.the ℕt [zero: 𝟘 |succ "x" : ‵"x"]).the ℕt).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval ((𝟘? twoC.the ℕt [zero: 𝟘 |succ "x" : ‵"x"]).the ℕt).infer ∅
 
 -- Inherited and synthesized types disagree in a switch:
-#eval ((ƛ "x" : ‵"x").the (ℕt =⇒ ℕt =⇒ ℕt)).infer ∅
+/--
+info: .inl _
+-/
+#guard_msgs in #eval ((ƛ "x" : ‵"x").the (ℕt =⇒ ℕt =⇒ ℕt)).infer ∅
 
 -- https://plfa.github.io/Inference/#erasure
 def Ty.erase : Ty → More.Ty

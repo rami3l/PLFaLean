@@ -1,7 +1,11 @@
+module
+
 -- https://plfa.github.io/Soundness/
 
-import Plfl.Init
-import Plfl.Untyped.Denotational.Compositional
+public import Plfl.Init
+public import Plfl.Untyped.Denotational.Compositional
+
+@[expose] public section
 
 namespace Soundness
 

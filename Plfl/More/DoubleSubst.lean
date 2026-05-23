@@ -1,9 +1,13 @@
+module
+
 -- https://plfa.github.io/More/#exercise-double-subst-stretch
 
 -- Adapted from <https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda>.
 
-import Plfl.Init
-import Plfl.More
+public import Plfl.Init
+public import Plfl.More
+
+@[expose] public section
 
 open More
 open Term Subst Notation

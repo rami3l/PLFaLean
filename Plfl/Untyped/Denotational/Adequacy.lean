@@ -1,8 +1,12 @@
+module
+
 -- https://plfa.github.io/Adequacy/
 
-import Plfl.Init
-import Plfl.Untyped.BigStep
-import Plfl.Untyped.Denotational.Soundness
+public import Plfl.Init
+public import Plfl.Untyped.BigStep
+public import Plfl.Untyped.Denotational.Soundness
+
+@[expose] public section
 
 namespace Adequacy
 

@@ -1,8 +1,10 @@
--- module
+module
 
 -- https://plfa.github.io/Untyped/
 
-import Plfl.Init
+public import Plfl.Init
+
+@[expose] public section
 
 namespace Untyped
 
@@ -51,9 +53,9 @@ instance Context.equiv_nat : Context ≃ ℕ where
   left_inv := left_inv
   right_inv := by intro; simp only [List.length_replicate]
   where
-    left_inv := by intro
-    | [] => trivial
-    | (✶) :: ss => calc List.replicate ((✶) :: ss).length (✶)
+    left_inv : (c : Context) → List.replicate c.length (✶) = c
+    | [] => rfl
+    | (✶) :: ss => by calc List.replicate ((✶) :: ss).length (✶)
       _ = List.replicate (ss.length + 1) (✶) := by rw [List.length_cons]
       _ = (✶) :: List.replicate ss.length (✶) := by rw [List.replicate_succ]
       _ = (✶) :: ss := by have := left_inv ss; simp_all only
@@ -346,7 +348,7 @@ def eval (gas : ℕ) (l : ∅ ⊢ a) : Steps l :=
     match progress l with
     | .done v => .steps .refl <| .done v
     | .step r =>
-      let ⟨rs, res⟩ := eval (gas - 1) (by trivial)
+      let ⟨rs, res⟩ := eval (gas - 1) _
       ⟨Trans.trans r rs, res⟩
 
 namespace Term
@@ -403,17 +405,150 @@ section examples
 
   abbrev evalRes (l : ∅ ⊢ a) (gas := 100) := (eval gas l).3
   -- abbrev evalResStar (l : ∅ ⊢ ✶) (gas := 100) := (eval gas l).3
-  #eval evalRes (gas := 3) fourC'
-  #eval evalRes fourC'
+  /--
+info: Untyped.Result.dnf
+-/
+#guard_msgs in #eval evalRes (gas := 3) fourC'
+  /--
+info: Untyped.Result.done
+  (Untyped.Normal.lam
+    (Untyped.Normal.lam
+      (Untyped.Normal.norm
+        (Untyped.Neutral.ap
+          (Untyped.Neutral.var ♯1)
+          (Untyped.Normal.norm
+            (Untyped.Neutral.ap
+              (Untyped.Neutral.var ♯1)
+              (Untyped.Normal.norm
+                (Untyped.Neutral.ap
+                  (Untyped.Neutral.var ♯1)
+                  (Untyped.Normal.norm
+                    (Untyped.Neutral.ap
+                      (Untyped.Neutral.var ♯1)
+                      (Untyped.Normal.norm (Untyped.Neutral.var ♯0))))))))))))
+-/
+#guard_msgs in #eval evalRes fourC'
 
-  #eval evalRes oneS
+  /--
+info: Untyped.Result.done
+  (Untyped.Normal.lam
+    (Untyped.Normal.lam
+      (Untyped.Normal.norm
+        (Untyped.Neutral.ap
+          (Untyped.Neutral.var ♯1)
+          (Untyped.Normal.lam (Untyped.Normal.lam (Untyped.Normal.norm (Untyped.Neutral.var ♯0))))))))
+-/
+#guard_msgs in #eval evalRes oneS
 
-  #eval evalRes twoS
-  #eval evalRes twoS''
+/--
+info: Untyped.Result.done
+  (Untyped.Normal.lam
+    (Untyped.Normal.lam
+      (Untyped.Normal.norm
+        (Untyped.Neutral.ap
+          (Untyped.Neutral.var ♯1)
+          (Untyped.Normal.lam
+            (Untyped.Normal.lam
+              (Untyped.Normal.norm
+                (Untyped.Neutral.ap
+                  (Untyped.Neutral.var ♯1)
+                  (Untyped.Normal.lam (Untyped.Normal.lam (Untyped.Normal.norm (Untyped.Neutral.var ♯0))))))))))))
+-/
+#guard_msgs in #eval evalRes twoS
+  /--
+info: Untyped.Result.done
+  (Untyped.Normal.lam
+    (Untyped.Normal.lam
+      (Untyped.Normal.norm
+        (Untyped.Neutral.ap
+          (Untyped.Neutral.var ♯1)
+          (Untyped.Normal.lam
+            (Untyped.Normal.lam
+              (Untyped.Normal.norm
+                (Untyped.Neutral.ap
+                  (Untyped.Neutral.var ♯1)
+                  (Untyped.Normal.lam (Untyped.Normal.lam (Untyped.Normal.norm (Untyped.Neutral.var ♯0))))))))))))
+-/
+#guard_msgs in #eval evalRes twoS''
 
-  #eval evalRes fourS
-  #eval evalRes fourS'
-  #eval evalRes fourS''
+/--
+info: Untyped.Result.done
+  (Untyped.Normal.lam
+    (Untyped.Normal.lam
+      (Untyped.Normal.norm
+        (Untyped.Neutral.ap
+          (Untyped.Neutral.var ♯1)
+          (Untyped.Normal.lam
+            (Untyped.Normal.lam
+              (Untyped.Normal.norm
+                (Untyped.Neutral.ap
+                  (Untyped.Neutral.var ♯1)
+                  (Untyped.Normal.lam
+                    (Untyped.Normal.lam
+                      (Untyped.Normal.norm
+                        (Untyped.Neutral.ap
+                          (Untyped.Neutral.var ♯1)
+                          (Untyped.Normal.lam
+                            (Untyped.Normal.lam
+                              (Untyped.Normal.norm
+                                (Untyped.Neutral.ap
+                                  (Untyped.Neutral.var ♯1)
+                                  (Untyped.Normal.lam
+                                    (Untyped.Normal.lam (Untyped.Normal.norm (Untyped.Neutral.var ♯0))))))))))))))))))))
+-/
+#guard_msgs in #eval evalRes fourS
+  /--
+info: Untyped.Result.done
+  (Untyped.Normal.lam
+    (Untyped.Normal.lam
+      (Untyped.Normal.norm
+        (Untyped.Neutral.ap
+          (Untyped.Neutral.var ♯1)
+          (Untyped.Normal.lam
+            (Untyped.Normal.lam
+              (Untyped.Normal.norm
+                (Untyped.Neutral.ap
+                  (Untyped.Neutral.var ♯1)
+                  (Untyped.Normal.lam
+                    (Untyped.Normal.lam
+                      (Untyped.Normal.norm
+                        (Untyped.Neutral.ap
+                          (Untyped.Neutral.var ♯1)
+                          (Untyped.Normal.lam
+                            (Untyped.Normal.lam
+                              (Untyped.Normal.norm
+                                (Untyped.Neutral.ap
+                                  (Untyped.Neutral.var ♯1)
+                                  (Untyped.Normal.lam
+                                    (Untyped.Normal.lam (Untyped.Normal.norm (Untyped.Neutral.var ♯0))))))))))))))))))))
+-/
+#guard_msgs in #eval evalRes fourS'
+  /--
+info: Untyped.Result.done
+  (Untyped.Normal.lam
+    (Untyped.Normal.lam
+      (Untyped.Normal.norm
+        (Untyped.Neutral.ap
+          (Untyped.Neutral.var ♯1)
+          (Untyped.Normal.lam
+            (Untyped.Normal.lam
+              (Untyped.Normal.norm
+                (Untyped.Neutral.ap
+                  (Untyped.Neutral.var ♯1)
+                  (Untyped.Normal.lam
+                    (Untyped.Normal.lam
+                      (Untyped.Normal.norm
+                        (Untyped.Neutral.ap
+                          (Untyped.Neutral.var ♯1)
+                          (Untyped.Normal.lam
+                            (Untyped.Normal.lam
+                              (Untyped.Normal.norm
+                                (Untyped.Neutral.ap
+                                  (Untyped.Neutral.var ♯1)
+                                  (Untyped.Normal.lam
+                                    (Untyped.Normal.lam (Untyped.Normal.norm (Untyped.Neutral.var ♯0))))))))))))))))))))
+-/
+#guard_msgs in #eval evalRes fourS''
 end examples
 
 -- https://plfa.github.io/Untyped/#multi-step-reduction-is-transitive

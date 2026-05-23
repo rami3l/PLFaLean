@@ -1,7 +1,12 @@
+module
+
 -- https://plfa.github.io/Properties/
 
-import Plfl.Init
+public meta import Plfl.Init
+public meta import Plfl.Lambda
 import Plfl.Lambda
+
+@[expose] public section
 
 open Lambda
 
@@ -323,7 +328,10 @@ section examples
   abbrev tySuccμ : ∅ ⊢ succμ ⦂ ℕt := by
     apply tyMu; apply tySucc; trivial
 
-  #eval eval 3 tySuccμ |>.3
+  /--
+  info: Properties.Result.dnf
+  -/
+  #guard_msgs in #eval eval 3 tySuccμ |>.3
 
   abbrev add_2_2 := add □ 2 □ 2
 
@@ -340,7 +348,11 @@ section examples
     · iterate 2 (apply tySucc)
       · exact tyZero
 
-  #eval eval 100 tyAdd_2_2 |>.3
+  /--
+  info: Properties.Result.done
+  (Lambda.Value.succ (Lambda.Value.succ (Lambda.Value.succ (Lambda.Value.succ (Lambda.Value.zero)))))
+  -/
+  #guard_msgs in #eval eval 100 tyAdd_2_2 |>.3
 end examples
 
 section subject_expansion

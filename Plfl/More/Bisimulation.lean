@@ -1,7 +1,11 @@
+module
+
 -- https://plfa.github.io/Bisimulation/
 
-import Plfl.Init
-import Plfl.More
+public import Plfl.Init
+public import Plfl.More
+
+@[expose] public section
 
 open More
 open Subst Notation
@@ -62,13 +66,10 @@ namespace Sim
   -- https://plfa.github.io/Bisimulation/#simulation-commutes-with-renaming
   def comm_rename (ρ : ∀ {a}, Γ ∋ a → Δ ∋ a) {m m' : Γ ⊢ a}
   : m ~ m' → rename ρ m ~ rename ρ m'
-  := by intro
-  | .var => exact .var
-  | .lam s => apply lam; exact comm_rename (ext ρ) s
-  | .ap sl sm => apply ap; repeat (apply comm_rename ρ; trivial)
-  | .let sl sm => apply «let»; repeat
-    first | apply comm_rename ρ | apply comm_rename (ext ρ)
-    trivial
+  | .var => .var
+  | .lam s => .lam (comm_rename (ext ρ) s)
+  | .ap sl sm => .ap (comm_rename ρ sl) (comm_rename ρ sm)
+  | .let sl sm => .let (comm_rename ρ sl) (comm_rename (ext ρ) sm)
 
   -- https://plfa.github.io/Bisimulation/#simulation-commutes-with-substitution
   def comm_exts {σ σ' : ∀ {a}, Γ ∋ a → Δ ⊢ a}
@@ -82,13 +83,10 @@ namespace Sim
   (gs : ∀ {a}, (x : Γ ∋ a) → @σ a x ~ @σ' a x)
   {m m' : Γ ⊢ a}
   : m ~ m' → subst σ m ~ subst σ' m'
-  := by intro
-  | .var => apply gs
-  | .lam s => apply lam; exact comm_subst (comm_exts gs) s
-  | .ap sl sm => apply ap; repeat (apply comm_subst gs; trivial)
-  | .let sm sn => apply «let»; repeat
-    first | apply comm_subst gs | apply comm_subst (comm_exts gs)
-    trivial
+  | @Sim.var _ _ x => gs x
+  | .lam s => .lam (comm_subst (comm_exts gs) s)
+  | .ap sl sm => .ap (comm_subst gs sl) (comm_subst gs sm)
+  | .let sl sm => .let (comm_subst gs sl) (comm_subst (comm_exts gs) sm)
 
   def comm_subst₁ {m m' : Γ ⊢ b} {n n' : Γ‚ b ⊢ a}
   (sm : m ~ m') (sn : n ~ n') : n⟦m⟧ ~ n'⟦m'⟧
@@ -123,30 +121,15 @@ m' - —→ - n'
 inductive Leg (m' n : Γ ⊢ a) : Prop where
 | intro (sim : n ~ n') (red : m' —→ n')
 
-def Leg.fromLegInv {m m' n : Γ ⊢ a} (s : m ~ m') (r : m —→ n) : Leg m' n := by
-  match s with
-  | .ap sl sm => match r with
-    | .lamβ v => cases sl with | lam sl =>
-      constructor
-      · apply comm_subst₁ <;> trivial
-      · apply lamβ; exact commValue sm v
-    | .apξ₁ r =>
-      have ⟨s', r'⟩ := fromLegInv sl r; constructor
-      · apply ap <;> trivial
-      · apply apξ₁ r'
-    | .apξ₂ v r =>
-      have ⟨s', r'⟩ := fromLegInv sm r; constructor
-      · apply ap <;> trivial
-      · refine apξ₂ ?_ r'; exact commValue sl v
-  | .let sm sn => match r with
-    | .letξ r =>
-      have ⟨s', r'⟩ := fromLegInv sm r; constructor
-      · apply «let» <;> trivial
-      · apply letξ; exact r'
-    | .letβ v =>
-      constructor
-      · apply comm_subst₁ <;> trivial
-      · apply letβ; exact commValue sm v
+def Leg.fromLegInv {m m' n : Γ ⊢ a} : (m ~ m') → (m —→ n) → Leg m' n
+  | .ap (.lam sl) sm, .lamβ v => .intro (comm_subst₁ sm sl) (.lamβ (commValue sm v))
+  | .ap sl sm, .apξ₁ r =>
+    let ⟨s', r'⟩ := fromLegInv sl r; .intro (.ap s' sm) (.apξ₁ r')
+  | .ap sl sm, .apξ₂ v r =>
+    let ⟨s', r'⟩ := fromLegInv sm r; .intro (.ap sl s') (.apξ₂ (commValue sl v) r')
+  | .let sm sn, .letξ r =>
+    let ⟨s', r'⟩ := fromLegInv sm r; .intro (.let s' sn) (.letξ r')
+  | .let sm sn, .letβ v => .intro (comm_subst₁ sm sn) (.letβ (commValue sm v))
 
 -- https://plfa.github.io/Bisimulation/#exercise-sim¹-practice
 /--
@@ -162,27 +145,12 @@ m - —→ - n
 inductive LegInv (m n' : Γ ⊢ a) : Prop where
 | intro (sim : n ~ n') (red : m —→ n)
 
-def LegInv.fromLeg {m m' n' : Γ ⊢ a} (s : m ~ m') (r : m' —→ n') : LegInv m n' := by
-  match s with
-  | .ap sl sm => match r with
-    | .lamβ v => cases sl with | lam sl =>
-      constructor
-      · apply comm_subst₁ <;> trivial
-      · apply lamβ; exact commValue' sm v
-    | .apξ₁ r =>
-      have ⟨s', r'⟩ := fromLeg sl r; constructor
-      · apply ap <;> trivial
-      · apply apξ₁ r'
-    | .apξ₂ v r =>
-      have ⟨s', r'⟩ := fromLeg sm r; constructor
-      · apply ap <;> trivial
-      · refine apξ₂ ?_ r'; exact commValue' sl v
-  | .let sm sn => match r with
-    | .letξ r =>
-      have ⟨s', r'⟩ := fromLeg sm r; constructor
-      · apply «let» <;> trivial
-      · apply letξ; exact r'
-    | .letβ v =>
-      constructor
-      · apply comm_subst₁ <;> trivial
-      · apply letβ; exact commValue' sm v
+def LegInv.fromLeg {m m' n' : Γ ⊢ a} : (m ~ m') → (m' —→ n') → LegInv m n'
+  | .ap (.lam sl) sm, .lamβ v => .intro (comm_subst₁ sm sl) (.lamβ (commValue' sm v))
+  | .ap sl sm, .apξ₁ r =>
+    let ⟨s', r'⟩ := fromLeg sl r; .intro (.ap s' sm) (.apξ₁ r')
+  | .ap sl sm, .apξ₂ v r =>
+    let ⟨s', r'⟩ := fromLeg sm r; .intro (.ap sl s') (.apξ₂ (commValue' sl v) r')
+  | .let sm sn, .letξ r =>
+    let ⟨s', r'⟩ := fromLeg sm r; .intro (.let s' sn) (.letξ r')
+  | .let sm sn, .letβ v => .intro (comm_subst₁ sm sn) (.letβ (commValue' sm v))

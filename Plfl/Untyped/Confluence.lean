@@ -1,8 +1,12 @@
+module
+
 -- https://plfa.github.io/Confluence/
 
-import Plfl.Init
-import Plfl.Untyped
-import Plfl.Untyped.Substitution
+public import Plfl.Init
+public import Plfl.Untyped
+public import Plfl.Untyped.Substitution
+
+@[expose] public section
 
 namespace Confluence
 
@@ -55,22 +59,24 @@ namespace PReduce
   instance : Trans (α := Γ ⊢ a) PReduce Clos Clos where trans r c := .head r c
 
   -- https://plfa.github.io/Confluence/#equivalence-between-parallel-reduction-and-reduction
-  def fromReduce {Γ a} {m n : Γ ⊢ a} : m —→ n → (m ⇛ n) := by intro
-  | .lamβ => refine .lamβ ?rn ?rv <;> rfl
-  | .lamζ rn => refine .lamζ ?_; exact fromReduce rn
-  | .apξ₁ rl => refine .apξ ?_ (by rfl); exact fromReduce rl
-  | .apξ₂ rm => refine .apξ (by rfl) ?_; exact fromReduce rm
+  def fromReduce {Γ a} {m n : Γ ⊢ a} : m —→ n → (m ⇛ n)
+  | .lamβ => .lamβ (.refl _) (.refl _)
+  | .lamζ rn => .lamζ (fromReduce rn)
+  | .apξ₁ rl => .apξ (fromReduce rl) (.refl _)
+  | .apξ₂ rm => .apξ (.refl _) (fromReduce rm)
 
-  def toReduceClos : (m ⇛ n) → (m —↠ n) := open Untyped.Reduce in by intro
-  | .var => rfl
-  | .lamβ rn rv => rename_i n n' v v'; calc (ƛ n) □ v
-    _ —↠ (ƛ n') □ v := by refine ap_congr₁ (toReduceClos ?_); exact .lamζ rn
-    _ —↠ (ƛ n') □ v' := ap_congr₂ rv.toReduceClos
-    _ —→ n'⟦v'⟧ := .lamβ
-  | .lamζ rn => apply lam_congr; exact rn.toReduceClos
-  | .apξ rl rm => rename_i l l' m m'; calc l □ m
-    _ —↠ l' □ m := ap_congr₁ rl.toReduceClos
-    _ —↠ l' □ m' := ap_congr₂ rm.toReduceClos
+  def toReduceClos : (m ⇛ n) → (m —↠ n)
+  | .var => Untyped.Reduce.Clos.refl
+  | .lamβ (n:=n) (n':=n') (v:=v) (v':=v') rn rv =>
+    calc (ƛ n) □ v
+      _ —↠ (ƛ n') □ v := Untyped.Reduce.ap_congr₁ (toReduceClos (.lamζ rn))
+      _ —↠ (ƛ n') □ v' := Untyped.Reduce.ap_congr₂ (toReduceClos rv)
+      _ —→ n'⟦v'⟧ := Untyped.Reduce.lamβ
+  | .lamζ rn => Untyped.Reduce.lam_congr (toReduceClos rn)
+  | .apξ (l:=l) (l':=l') (m:=m) (m':=m') rl rm =>
+    calc l □ m
+      _ —↠ l' □ m := Untyped.Reduce.ap_congr₁ (toReduceClos rl)
+      _ —↠ l' □ m' := Untyped.Reduce.ap_congr₂ (toReduceClos rm)
 end PReduce
 
 instance instNonemptyPReduceReduceClos : (m ⇛* n) ≃ (m —↠ n) where

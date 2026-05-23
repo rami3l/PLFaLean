@@ -1,8 +1,12 @@
+module
+
 -- https://plfa.github.io/BigStep/
 
-import Plfl.Init
-import Plfl.Untyped
-import Plfl.Untyped.Substitution
+public import Plfl.Init
+public import Plfl.Untyped
+public import Plfl.Untyped.Substitution
+
+@[expose] public section
 
 namespace BigStep
 

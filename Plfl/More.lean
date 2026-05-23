@@ -1,6 +1,10 @@
+module
+
 -- https://plfa.github.io/More/
 
-import Plfl.Init
+public import Plfl.Init
+
+@[expose] public section
 
 -- This module was extended from the original one for <https://plfa.github.io/DeBruijn/>.
 namespace More
@@ -583,7 +587,7 @@ def eval (gas : ℕ) (l : ∅ ⊢ a) : Steps l :=
     match progress l with
     | .done v => .steps .refl <| .done v
     | .step r =>
-      let ⟨rs, res⟩ := eval (gas - 1) (by trivial)
+      let ⟨rs, res⟩ := eval (gas - 1) _
       ⟨Trans.trans r rs, res⟩
 
 section examples
@@ -594,22 +598,63 @@ section examples
 
   abbrev evalRes (l : ∅ ⊢ a) (gas := 100) := (eval gas l).3
 
-  #eval evalRes (gas := 3) succμ
-  #eval evalRes <| add □ 2 □ 1
-  #eval evalRes <| mul □ 2 □ 2
+  /--
+info: More.Result.dnf
+-/
+#guard_msgs in #eval evalRes (gas := 3) succμ
+  /--
+info: More.Result.done (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.zero))))
+-/
+#guard_msgs in #eval evalRes <| add □ 2 □ 1
+  /--
+info: More.Result.done (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.zero)))))
+-/
+#guard_msgs in #eval evalRes <| mul □ 2 □ 2
   -- Prim
-  #eval evalRes <| .prim 2 ⋄ .prim 3
-  -- Let
-  #eval evalRes <| .let (.prim 6) (#0 ⋄ .prim 7)
-  #eval evalRes <| .let (.prim 3) <| .let (.prim 4) (.prod (#1) (#0))
-  -- Prod, Unit
-  #eval evalRes <| .fst <| .snd <| .prod ◯ (.prod (.prim 6) (ι ι 0))
-  -- Sum
-  #eval evalRes <| (.left (.prim 3) : ∅ ⊢ ℕp + ℕt)
-  #eval evalRes <| (.right 4 : ∅ ⊢ ℕp + ℕt)
-  #eval evalRes <| .caseSum (.right 1 : ∅ ⊢ ℕp + ℕt) 𝟘 (.succ (#0))
+  /--
+info: More.Result.done (More.Value.prim 6)
+-/
+#guard_msgs in #eval evalRes <| .prim 2 ⋄ .prim 3
+-- Let
+/--
+info: More.Result.done (More.Value.prim 42)
+-/
+#guard_msgs in #eval evalRes <| .let (.prim 6) (#0 ⋄ .prim 7)
+/--
+info: More.Result.done (More.Value.prod (More.Value.prim 3) (More.Value.prim 4))
+-/
+#guard_msgs in #eval evalRes <| .let (.prim 3) <| .let (.prim 4) (.prod (#1) (#0))
+-- Prod, Unit
+/--
+info: More.Result.done (More.Value.prim 6)
+-/
+#guard_msgs in #eval evalRes <| .fst <| .snd <| .prod ◯ (.prod (.prim 6) (ι ι 0))
+-- Sum
+/--
+info: More.Result.done (More.Value.left (More.Value.prim 3))
+-/
+#guard_msgs in #eval evalRes <| (.left (.prim 3) : ∅ ⊢ ℕp + ℕt)
+/--
+info: More.Result.done
+  (More.Value.right (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.zero))))))
+-/
+#guard_msgs in #eval evalRes <| (.right 4 : ∅ ⊢ ℕp + ℕt)
+/--
+info: More.Result.done (More.Value.succ (More.Value.succ (More.Value.zero)))
+-/
+#guard_msgs in #eval evalRes <| .caseSum (.right 1 : ∅ ⊢ ℕp + ℕt) 𝟘 (.succ (#0))
   -- List
-  #eval evalRes <| .nil (a := ℕt)
-  #eval evalRes <| .cons (ι 𝟘) <| .cons 𝟘 .nil
-  #eval evalRes <| .caseList (.cons (ι 𝟘) <| .cons 𝟘 .nil) 𝟘 (#1 /- 0:cdr, 1:car -/)
+  /--
+info: More.Result.done (More.Value.nil)
+-/
+#guard_msgs in #eval evalRes <| .nil (a := ℕt)
+  /--
+info: More.Result.done
+  (More.Value.cons (More.Value.succ (More.Value.zero)) (More.Value.cons (More.Value.zero) (More.Value.nil)))
+-/
+#guard_msgs in #eval evalRes <| .cons (ι 𝟘) <| .cons 𝟘 .nil
+  /--
+info: More.Result.done (More.Value.succ (More.Value.zero))
+-/
+#guard_msgs in #eval evalRes <| .caseList (.cons (ι 𝟘) <| .cons 𝟘 .nil) 𝟘 (#1 /- 0:cdr, 1:car -/)
 end examples

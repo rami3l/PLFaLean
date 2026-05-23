@@ -1,6 +1,10 @@
+module
+
 -- https://plfa.github.io/DeBruijn/
 
-import Plfl.Init
+public import Plfl.Init
+
+@[expose] public section
 
 -- Sorry, nothing is inherited from previous chapters here. We have to start over.
 namespace DeBruijn
@@ -42,12 +46,12 @@ namespace Lookup
   infix:40 " ∋ " => Lookup
 
   -- https://github.com/arthurpaulino/lean4-metaprogramming-book/blob/d6a227a63c55bf13d49d443f47c54c7a500ea27b/md/main/macros.md#simplifying-macro-declaration
-  syntax "get_elem" (ppSpace term) : tactic
-  macro_rules | `(tactic| get_elem $n) => match n.1.toNat with
-  | 0 => `(tactic | exact Lookup.z)
-  | n+1 => `(tactic| apply Lookup.s; get_elem $(Lean.quote n))
+  syntax "get_elem" (ppSpace term) : term
+  macro_rules | `(term| get_elem $n) => match n.1.toNat with
+  | 0 => `(term| Lookup.z)
+  | n+1 => `(term| Lookup.s (get_elem $(Lean.quote n)))
 
-  macro "♯ " n:term:90 : term => `(by get_elem $n)
+  macro "♯ " n:term:90 : term => `(get_elem $n)
 
   example : ∅‚ ℕt =⇒ ℕt‚ ℕt ∋ ℕt := .z
   example : ∅‚ ℕt =⇒ ℕt‚ ℕt ∋ ℕt := ♯0
@@ -357,7 +361,7 @@ def eval (gas : ℕ) (l : ∅ ⊢ a) : Steps l :=
     match progress l with
     | .done v => .steps .nil <| .done v
     | .step r =>
-      let ⟨rs, res⟩ := eval (gas - 1) (by trivial)
+      let ⟨rs, res⟩ := eval (gas - 1) _
       ⟨.cons r rs, res⟩
 
 section examples
@@ -366,7 +370,20 @@ section examples
   -- def x : ℕ := x + 1
   abbrev succμ : ∅ ⊢ ℕt := μ ι #0
 
-  #eval eval 3 succμ |> (·.3)
-  #eval eval 100 (add □ 2 □ 2) |> (·.3)
-  #eval eval 100 (mul □ 2 □ 3) |> (·.3)
+  /--
+info: DeBruijn.Result.dnf
+-/
+#guard_msgs in #eval eval 3 succμ |> (·.3)
+  /--
+info: DeBruijn.Result.done
+  (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.zero)))))
+-/
+#guard_msgs in #eval eval 100 (add □ 2 □ 2) |> (·.3)
+  /--
+info: DeBruijn.Result.done
+  (DeBruijn.Value.succ
+    (DeBruijn.Value.succ
+      (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.zero)))))))
+-/
+#guard_msgs in #eval eval 100 (mul □ 2 □ 3) |> (·.3)
 end examples

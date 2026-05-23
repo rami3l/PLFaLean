@@ -1,7 +1,11 @@
+module
+
 -- https://plfa.github.io/Compositional/
 
-import Plfl.Init
-import Plfl.Untyped.Denotational
+public import Plfl.Init
+public import Plfl.Untyped.Denotational
+
+@[expose] public section
 
 namespace Compositional
 

@@ -1,7 +1,11 @@
+module
+
 -- https://plfa.github.io/ContextualEquivalence/
 
-import Plfl.Init
-import Plfl.Untyped.Denotational.Adequacy
+public import Plfl.Init
+public import Plfl.Untyped.Denotational.Adequacy
+
+@[expose] public section
 
 namespace ContextualEquivalence
 

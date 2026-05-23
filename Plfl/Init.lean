@@ -1,8 +1,8 @@
--- module
+module
 
-import Mathlib.Logic.Function.Basic
-import Mathlib.Logic.Relator
-import Mathlib.Tactic
+public import Mathlib.Tactic
+
+@[expose] public section
 
 /--
 `is_empty` converts `IsEmpty α` to `α → False`.

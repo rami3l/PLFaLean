@@ -1,7 +1,10 @@
--- module
+module
+
 -- https://plfa.github.io/Lambda/
 
-import Plfl.Init
+public import Plfl.Init
+
+@[expose] public section
 
 namespace Lambda
 
