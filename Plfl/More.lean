@@ -140,31 +140,6 @@ inductive Term : Context → Ty → Type where
 | caseList : Term Γ (.list a) → Term Γ b → Term (Γ‚ a‚ .list a) b → Term Γ b
 deriving DecidableEq, Repr
 
-@[simp]
-def Term.size : Term Γ a → Nat
-  | .var _ => 1
-  | .lam t => t.size + 1
-  | .ap l m => l.size + m.size + 1
-  | .zero => 1
-  | .succ t => t.size + 1
-  | .case l m n => l.size + m.size + n.size + 1
-  | .mu t => t.size + 1
-  | .prim _ => 1
-  | .mulP m n => m.size + n.size + 1
-  | .let m n => m.size + n.size + 1
-  | .prod m n => m.size + n.size + 1
-  | .fst t => t.size + 1
-  | .snd t => t.size + 1
-  | .left t => t.size + 1
-  | .right t => t.size + 1
-  | .caseSum s l r => s.size + l.size + r.size + 1
-  | .caseVoid v => v.size + 1
-  | .unit => 1
-  | .nil => 1
-  | .cons m n => m.size + n.size + 1
-  | .caseList l m n => l.size + m.size + n.size + 1
-
-
 namespace Notation
   open Term
 
@@ -586,8 +561,8 @@ def eval (gas : ℕ) (l : ∅ ⊢ a) : Steps l :=
   else
     match progress l with
     | .done v => .steps .refl <| .done v
-    | .step r =>
-      let ⟨rs, res⟩ := eval (gas - 1) _
+    | .step (n := n) r =>
+      let ⟨rs, res⟩ := eval (gas - 1) n
       ⟨Trans.trans r rs, res⟩
 
 section examples

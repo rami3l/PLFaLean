@@ -149,6 +149,35 @@ lemma insert_twice_idx {Γ Δ Φ : Context} {a b c : Ty} (i : Γ‚‚ Δ‚‚ 
   | _ :: _, .z => rfl
   | d :: Φ, .s i => apply congr_arg Lookup.s; exact insert_twice_idx i
 
+/--
+Custom size function for `Term` that only counts AST nodes, ignoring the sizes of `Context` and `Ty` indices.
+
+Lean's default `sizeOf` includes index sizes, causing termination proofs to fail when the context grows.
+-/
+@[simp]
+private def More.Term.astSize : Term Γ a → Nat
+  | .var _ => 1
+  | .lam t => t.astSize + 1
+  | .ap l m => l.astSize + m.astSize + 1
+  | .zero => 1
+  | .succ t => t.astSize + 1
+  | .case l m n => l.astSize + m.astSize + n.astSize + 1
+  | .mu t => t.astSize + 1
+  | .prim _ => 1
+  | .mulP m n => m.astSize + n.astSize + 1
+  | .let m n => m.astSize + n.astSize + 1
+  | .prod m n => m.astSize + n.astSize + 1
+  | .fst t => t.astSize + 1
+  | .snd t => t.astSize + 1
+  | .left t => t.astSize + 1
+  | .right t => t.astSize + 1
+  | .caseSum s l r => s.astSize + l.astSize + r.astSize + 1
+  | .caseVoid v => v.astSize + 1
+  | .unit => 1
+  | .nil => 1
+  | .cons m n => m.astSize + n.astSize + 1
+  | .caseList l m n => l.astSize + m.astSize + n.astSize + 1
+
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L120
 lemma insert_twice {Γ Δ Φ : Context} {a b c : Ty} (t : Γ‚‚ Δ‚‚ Φ ⊢ a)
 : rename
@@ -187,7 +216,7 @@ lemma insert_twice {Γ Δ Φ : Context} {a b c : Ty} (t : Γ‚‚ Δ‚‚ Φ �
   | .caseList l m n =>
     apply congr_arg₃ caseList <;> try apply insert_twice
     · rename_i a'; exact insert_twice (Φ := Φ‚ a'‚ .list a') n
-termination_by t.size
+termination_by t.astSize
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L132
 lemma insert_subst_idx
@@ -242,7 +271,7 @@ lemma insert_subst
   | .caseList l m n =>
     apply congr_arg₃ caseList <;> try apply insert_subst
     · rename_i a'; exact insert_subst (Φ := Φ‚ a'‚ .list a') n
-termination_by t.size
+termination_by t.astSize
 
 -- https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda#L154
 lemma shift_subst

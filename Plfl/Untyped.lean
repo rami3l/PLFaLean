@@ -347,8 +347,8 @@ def eval (gas : ℕ) (l : ∅ ⊢ a) : Steps l :=
   else
     match progress l with
     | .done v => .steps .refl <| .done v
-    | .step r =>
-      let ⟨rs, res⟩ := eval (gas - 1) _
+    | .step (n := n) r =>
+      let ⟨rs, res⟩ := eval (gas - 1) n
       ⟨Trans.trans r rs, res⟩
 
 namespace Term

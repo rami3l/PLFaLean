@@ -360,8 +360,8 @@ def eval (gas : ℕ) (l : ∅ ⊢ a) : Steps l :=
   else
     match progress l with
     | .done v => .steps .nil <| .done v
-    | .step r =>
-      let ⟨rs, res⟩ := eval (gas - 1) _
+    | .step (n := n) r =>
+      let ⟨rs, res⟩ := eval (gas - 1) n
       ⟨.cons r rs, res⟩
 
 section examples

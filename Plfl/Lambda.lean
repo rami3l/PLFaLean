@@ -414,68 +414,28 @@ section examples
   open Term Context Lookup Context.IsTy
 
   -- https://plfa.github.io/Lambda/#non-examples
-  example : ∅ ⊬ 𝟘 □ 1 := by
-    by_contra h; unfold NoTy at h; push Not at h
-    let ⟨tt, ht⟩ := h
-    cases ht with
-    | intro ht =>
-      cases ht with
-      | tyAp hl hr =>
-        cases hl
+  example : ∅ ⊬ 𝟘 □ 1 :=
+    ⟨fun | .tyAp hl _ => by cases hl⟩
 
   abbrev illLam := ƛ "x" : ‵"x" □ ‵"x"
 
-  lemma nty_illLam : ∅ ⊬ illLam := by
-    by_contra h; unfold NoTy at h; push Not at h
-    let ⟨tt, ht⟩ := h
-    cases ht with
-    | intro ht =>
-      cases ht with
-      | tyLam ht' =>
-        cases ht' with
-        | tyAp hl hr =>
-          cases hl with
-          | tyVar hx =>
-            cases hr with
-            | tyVar hx' =>
-              have heq := Lookup.functional hx hx'
-              exact Ty.t_to_t'_ne_t _ _ heq
+  lemma nty_illLam : ∅ ⊬ illLam :=
+    ⟨fun | .tyLam (.tyAp (.tyVar hx) (.tyVar hx')) => Ty.t_to_t'_ne_t _ _ (Lookup.functional hx hx')⟩
 
   -- https://plfa.github.io/Lambda/#quiz-3
   example : ∅‚ "y" ⦂ ℕt =⇒ ℕt‚ "x" ⦂ ℕt ⊢ ‵"y" □ ‵"x" ⦂ ℕt := by
     apply tyAp <;> trivial
 
-  example : ∅‚ "y" ⦂ ℕt =⇒ ℕt‚ "x" ⦂ ℕt ⊬ ‵"x" □ ‵"y" := by
-    by_contra h; unfold NoTy at h; push Not at h
-    let ⟨tt, ht⟩ := h
-    cases ht with
-    | intro ht =>
-      cases ht with
-      | tyAp hl hr =>
-        cases hl with
-        | tyVar hx =>
-          cases hx with
-          | s hne _ => contradiction
+  example : ∅‚ "y" ⦂ ℕt =⇒ ℕt‚ "x" ⦂ ℕt ⊬ ‵"x" □ ‵"y" :=
+    ⟨fun | .tyAp (.tyVar hx) _ => by cases hx with | s _ _ => contradiction⟩
 
   example : ∅‚ "y" ⦂ ℕt =⇒ ℕt ⊢ ƛ "x" : ‵"y" □ ‵"x" ⦂ ℕt =⇒ ℕt := by
     apply tyLam; apply tyAp <;> trivial
 
-  example : ∅‚ "x" ⦂ t ⊬ ‵"x" □ ‵"x" := by
-    by_contra h; unfold NoTy at h; push Not at h
-    let ⟨tt, ht⟩ := h
-    cases ht with
-    | intro ht =>
-      cases ht with
-      | tyAp hl hr =>
-        cases hl with
-        | tyVar hl' =>
-          cases hr with
-          | tyVar hr' =>
-            cases hl' with
-            | z =>
-              cases hr' with
-              | s hne _ => contradiction
-            | s hne _ => contradiction
+  example : ∅‚ "x" ⦂ t ⊬ ‵"x" □ ‵"x" :=
+    ⟨fun
+    | .tyAp (.tyVar .z) (.tyVar (.s _ _)) => by contradiction
+    | .tyAp (.tyVar (.s _ _)) _ => by contradiction⟩
 
   example
   : ∅‚ "x" ⦂ ℕt =⇒ ℕt‚ "y" ⦂ ℕt =⇒ ℕt

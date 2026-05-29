@@ -18,7 +18,7 @@ abbrev Subst (Γ Δ) := ∀ {a : Ty}, Γ ∋ a → Δ ⊢ a
 abbrev ids : Subst Γ Γ := .var
 abbrev shift : Subst Γ (Γ‚ a) := .var ∘ .s
 
-@[simp] def cons (m : Δ ⊢ a) (σ : Subst Γ Δ) : Subst (Γ‚ a) Δ
+abbrev cons (m : Δ ⊢ a) (σ : Subst Γ Δ) : Subst (Γ‚ a) Δ
 | _, .z => m
 | _, .s x => σ x
 
@@ -88,10 +88,12 @@ section
   theorem sub_ids {Γ} {m : Γ ⊢ a} : ⟪ids (Γ := Γ)⟫ m = m := by
     match m with
     | ‵ _ => rfl
-    | ƛ n => apply congr_arg Term.lam; convert sub_ids;
-             simp_all only
-             ext x_1 x_2 : 2
-             simp_all only [exts_ids]
+    | ƛ n =>
+      apply congr_arg Term.lam
+      convert sub_ids
+      simp_all only
+      ext x_1 x_2 : 2
+      simp_all only [exts_ids]
     | l □ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact sub_ids
 
   theorem rename_id : rename (λ {_} x => x) m = m := by
@@ -127,8 +129,8 @@ section
       apply congr_arg Term.lam
 
       let ρ' : ∀ {Γ}, Rename Γ (Γ‚ ✶)
-        | [] => λ i => by cases i
-        | _ :: _ => ext ρ
+        | [] => by intro i; apply @ρ; exact i
+        | ✶ :: Γ => by intro i; apply ext ρ; exact i
 
       apply comm_subst_rename (Γ := Γ‚ ✶) (Δ := Δ‚ ✶) (σ := exts σ) (ρ := ρ') (m := n); intro
       | .z => rfl

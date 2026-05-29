@@ -66,19 +66,13 @@ namespace Canonical
   lemma wellTyped_right_inv (c : ∅ ⊢ v ⦂ t × Value v)
   : wellTyped (wellTypedInv c) = c
   := by
-    rcases c with ⟨ty, v⟩
-    cases v with
-    | lam =>
-        cases ty with
-        | tyLam ty => rfl
-    | zero =>
-        cases ty with
-        | tyZero => rfl
-    | succ n =>
-        cases ty with
-        | tySucc ty =>
-            have ih := @wellTyped_right_inv _ _ ⟨ty, n⟩
-            simp only [wellTypedInv, wellTyped, ih]
+    match c with
+    | ⟨tyLam ty, Value.lam⟩ => obtain ⟨fst, snd⟩ := c; rfl
+    | ⟨tyZero, Value.zero⟩ => obtain ⟨fst, snd⟩ := c; rfl
+    | ⟨tySucc ty, Value.succ n⟩ =>
+        rename_i v'; have := @wellTyped_right_inv v' ℕt ⟨ty, n⟩;
+        rw [wellTypedInv, wellTyped];
+        · simp_all only
 
   /--
   The Canonical forms are exactly the well-typed values.
@@ -210,7 +204,7 @@ namespace Renaming
     | tyMu j => apply tyMu; exact rename (ext ρ) j
 
   def Lookup.weaken : ∅ ∋ m ⦂ t → Γ ∋ m ⦂ t := by
-    intro h; cases h
+    nofun
 
   def weaken : ∅ ⊢ m ⦂ t → Γ ⊢ m ⦂ t := by
     intro j; refine rename ?_ j; exact Lookup.weaken
@@ -358,37 +352,38 @@ end examples
 section subject_expansion
   open Term
 
-  abbrev illCase := 𝟘? 𝟘 [zero: 𝟘 |succ "x" : add]
-
   -- https://plfa.github.io/Properties/#exercise-subject_expansion-practice
   example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
-    refine ⟨fun f => ?_⟩
+    by_contra f
+    simp_all only [isEmpty_pi, not_exists, not_isEmpty_iff]
+    let illCase := 𝟘? 𝟘 [zero: 𝟘 |succ "x" : add]
     have nty_ill : ∅ ⊬ illCase := by
-      intro tt
+      intro t
       refine ⟨fun j => ?_⟩
-      cases j with
-      | tyCase _ jm jn =>
-        cases jm with
-        | tyZero =>
-          cases jn with
-          | tyMu jn' =>
-            cases jn'
-    exact nty_ill.false (f tyZero zeroβ)
+      simp only [illCase] at j
+      cases j; rename_i jz js
+      cases jz
+      cases js; rename_i js'
+      cases js'
+    have := f 𝟘 ℕt illCase tyZero zeroβ
+    exact nty_ill.false this.some
 
-  abbrev illAp := (ƛ "x" : 𝟘) □ illLam
-
-  example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
-    refine ⟨fun f => ?_⟩
+example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
+    by_contra f
+    simp_all only [isEmpty_pi, not_exists, not_isEmpty_iff]
+    let illAp := (ƛ "x" : 𝟘) □ illLam
     have nty_ill : ∅ ⊬ illAp := by
       intro tt
       refine ⟨fun j => ?_⟩
-      cases j with
-      | tyAp _ jr =>
-        exact nty_illLam.false jr
+      simp only [illAp] at j
+      cases j; rename_i jl jr
+      exact nty_illLam.false jl  -- Use jl instead of jr
     have h_red : illAp —→ 𝟘 := by
+      simp only [illAp]
       apply lamβ
       exact Value.lam
-    exact nty_ill.false (f tyZero h_red)
+    have := f 𝟘 ℕt illAp tyZero h_red  -- Pass arguments explicitly
+    exact nty_ill.false this.some
 end subject_expansion
 
 -- https://plfa.github.io/Properties/#well-typed-terms-dont-get-stuck

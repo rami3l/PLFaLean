@@ -333,8 +333,8 @@ namespace Value
   instance : Trans Subset Subset Included where trans := instTrans.trans
 
   variable {u v w : Value}
-  def Included.fst (s : Included (u ⊔ v) w) : u ⊆ w := fun h => s (Or.inl h)
-  def Included.snd (s : Included (u ⊔ v) w) : v ⊆ w := fun h => s (Or.inr h)
+  def Included.fst (s : Included (u ⊔ v) w) : u ⊆ w := s ∘ Or.inl
+  def Included.snd (s : Included (u ⊔ v) w) : v ⊆ w := s ∘ Or.inr
 end Value
 
 theorem sub_of_elem (e : u ∈ v) : u ⊑ v := by
@@ -367,8 +367,8 @@ inductive IsFn (u : Value) : Prop where | isFn (h : u = v ⇾ w)
 def AllFn (v : Value) : Prop := ∀ {u}, u ∈ v → IsFn u
 
 namespace AllFn
-  def fst (f : AllFn (u ⊔ v)) : AllFn u := fun h => f (Or.inl h)
-  def snd (f : AllFn (u ⊔ v)) : AllFn v := fun h => f (Or.inr h)
+  def fst (f : AllFn (u ⊔ v)) : AllFn u := f ∘ Or.inl
+  def snd (f : AllFn (u ⊔ v)) : AllFn v := f ∘ Or.inr
 end AllFn
 
 lemma not_isFn_bot : ¬ IsFn ⊥ := nofun
@@ -402,24 +402,20 @@ theorem included_conjDom (f : AllFn u) (i : v ⇾ w ∈ u) : v ⊆ u.conjDom := 
   rcases i with h | h
   · calc v
       _ ⊆ u.conjDom := ih f.fst h
-      _ ⊆ (u ⊔ u').conjDom := fun h => Or.inl h
+      _ ⊆ (u ⊔ u').conjDom := Or.inl
   · calc v
       _ ⊆ u'.conjDom := ih' f.snd h
-      _ ⊆ (u ⊔ u').conjDom := fun h => Or.inr h
+      _ ⊆ (u ⊔ u').conjDom := Or.inr
 
 /-- Given a set `u` of identical terms `v ⇾ w`, we know that `u.conjCodom` is included in `w`. -/
 theorem conjCodom_included (s : u ⊆ v ⇾ w) : u.conjCodom ⊆ w := by induction u with
 | bot =>
-  have h := s (u := ⊥) rfl
-  cases h
+  cases s (u := ⊥) rfl
 | fn u₁ u₂ =>
-  have h := s (u := u₁ ⇾ u₂) rfl
-  cases h; intro _ hx; exact hx
+  cases s (u := u₁ ⇾ u₂) rfl; intro _ hx; exact hx
 | conj _ _ ih ih' =>
   intro x h
-  rcases h with i | i
-  · exact ih s.fst i
-  · exact ih' s.snd i
+  exact Or.elim h (ih s.fst) (ih' s.snd)
 
 /--
 We say that `v ⇾ w` factors `u` into `u`, if:
@@ -438,19 +434,14 @@ def Factor (u u' v w : Value) : Prop :=
 theorem sub_inv (lt : u ⊑ u') {v w} (i : v ⇾ w ∈ u) : ∃ u'', Factor u' u'' v w :=
   by induction lt generalizing v w with
   | bot => cases i
-  | conjL _ _ ih ih' =>
-    rcases i with h | h
-    · exact ih h
-    · exact ih' h
-  | conjR₁ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, fun h => Or.inl (s h)
-  | conjR₂ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, fun h => Or.inr (s h)
-  | fn lt lt' => cases i; rename_i v v' w' w _ _; exists v ⇾ w, (fun h => IsFn.isFn h), id
+  | conjL _ _ ih ih' => exact Or.elim i ih ih'
+  | conjR₁ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, Or.inl ∘ s
+  | conjR₂ _ ih => have ⟨u'', f, s, ss⟩ := ih i; exists u'', f, Or.inr ∘ s
+  | fn lt lt' => cases i; rename_i v v' w' w _ _; exists v ⇾ w, (IsFn.isFn ·), id
   | dist =>
     cases i; rename_i v w w'; exists v ⇾ w ⊔ v ⇾ w'
     refine ⟨?_, id, ?_, .refl⟩
-    · intro _ h; rcases h with h' | h'
-      · exact .isFn h'
-      · exact .isFn h'
+    · exact (Or.elim · .isFn .isFn)
     · exact .conjL .refl .refl
   | trans _ _ ih ih' =>
     rename_i u' v' w'; have ⟨u'', f, s, ss⟩ := ih i; have ⟨u'', f, s, ss'⟩ := trans f s ih'
@@ -465,14 +456,8 @@ theorem sub_inv (lt : u ⊑ u') {v w} (i : v ⇾ w ∈ u) : ∃ u'', Factor u' u
     | conj _ _ ih ih' =>
       have ⟨s, s'⟩ := conj_included_inv s
       have ⟨u₃, f₃, s, ss⟩ := ih f.fst s; have ⟨u₃', f₃', s', ss'⟩ := ih' f.snd s'
-      exists u₃ ⊔ u₃'
-      refine ⟨?_, ?_, conj_sub_conj ss.1 ss'.1, conj_sub_conj ss.2 ss'.2⟩
-      · intro _ h; rcases h with h' | h'
-        · exact f₃ h'
-        · exact f₃' h'
-      · intro _ h; rcases h with h' | h'
-        · exact s h'
-        · exact s' h'
+      exists u₃ ⊔ u₃', (Or.elim · f₃ f₃'), (Or.elim · s s')
+      exact ⟨conj_sub_conj ss.1 ss'.1, conj_sub_conj ss.2 ss'.2⟩
 
 lemma sub_inv_fn (lt : v ⇾ w ⊑ u)
 : ∃ u',
