@@ -15,11 +15,13 @@ maxSynthPendingDepth = 3    # same as mathlib, changes behaviour of typeclass in
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
+rev = "v4.30.0"
 # git = "https://github.com/leanprover-community/mathlib4.git"
 
 [[require]]
 name = "aesop"
 scope = "leanprover-community"
+rev = "v4.30.0"
 # git = "https://github.com/JLimperg/aesop"
 
 [[lean_lib]]
