@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ./lake-packages
+            ./.lake/packages
           key: deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}
           restore-keys: |
             deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}
@@ -37,7 +37,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ./build
+            ./.lake/build
           key: build-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ github.sha }}
           restore-keys: |
             build-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}
