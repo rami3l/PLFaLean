@@ -1,6 +1,7 @@
 module
 
-public import Mathlib.Tactic
+public import Mathlib.Logic.IsEmpty.Defs
+public import Mathlib.Logic.IsEmpty.Basic
 
 @[expose] public section
 
@@ -18,7 +19,7 @@ abbrev Decidable' α := IsEmpty α ⊕' α
 namespace Decidable'
   def toDecidable : Decidable' α → Decidable (Nonempty α) := by intro
   | .inr a => right; exact ⟨a⟩
-  | .inl na => left; simpa
+  | .inl na => left; simpa only [not_nonempty_iff]
 end Decidable'
 
 instance [Repr α] : Repr (Decidable' α) where

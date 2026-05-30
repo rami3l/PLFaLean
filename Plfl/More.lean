@@ -3,6 +3,8 @@ module
 -- https://plfa.github.io/More/
 
 public import Plfl.Init
+import Batteries.Tactic.Init
+public import Mathlib.Data.Matrix.Mul
 
 @[expose] public section
 

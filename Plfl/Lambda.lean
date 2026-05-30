@@ -3,6 +3,9 @@ module
 -- https://plfa.github.io/Lambda/
 
 public import Plfl.Init
+import Mathlib.Data.Nat.Notation
+import Mathlib.Tactic.ApplyFun
+public import Mathlib.Logic.Embedding.Basic
 
 @[expose] public section
 

@@ -5,6 +5,10 @@ module
 public import Plfl.Init
 public import Plfl.Untyped.BigStep
 public import Plfl.Untyped.Denotational.Soundness
+public import Mathlib.Tactic
+import Mathlib.Algebra.Order.Monoid.Unbundled.Basic
+import Mathlib.Algebra.Order.Monoid.Canonical.Defs
+import Mathlib.Algebra.Order.SuccPred
 
 @[expose] public section
 
@@ -74,10 +78,12 @@ mutual
   | _, .clos (_ □ _) _ => ⊥
   | ⊥, .clos (ƛ _) _ => ⊤
   | vw@(v ⇾ w), .clos (ƛ n) γ =>
-    have : sizeOf w < sizeOf vw := by subst_vars; simp
+    have : sizeOf w < sizeOf vw := by subst_vars; simp only [Value.fn.sizeOf_spec,
+      lt_add_iff_pos_left, add_pos_iff, Order.lt_one_iff, true_or]
     ∀ {c}, 𝔼 v c → GtFn w → ∃ c', (γ‚' c ⊢ n ⇓ c') ∧ 𝕍 w c'
   | uv@(.conj u v), c@(.clos (ƛ _) _) =>
-    have : sizeOf v < sizeOf uv := by subst_vars; simp
+    have : sizeOf v < sizeOf uv := by subst_vars; simp only [Value.conj.sizeOf_spec,
+      lt_add_iff_pos_left, add_pos_iff, Order.lt_one_iff, true_or]
     𝕍 u c ∧ 𝕍 v c
 
   /--
@@ -103,10 +109,10 @@ def WHNF (t : Γ ⊢ a) : Prop := ∃ n : Γ‚ ✶ ⊢ ✶, t = (ƛ n)
 
 /-- A closure in a 𝕍 relation must be in WHNF. -/
 lemma WHNF.of_𝕍 (vc : 𝕍 v (.clos m γ)) : WHNF m := by
-  cases m with (try simp [𝕍] at vc; try contradiction) | lam n => exists n
+  cases m with (try simp only [𝕍, «Prop».bot_eq_false] at vc; try contradiction) | lam n => exists n
 
 lemma 𝕍.conj (uc : 𝕍 u c) (vc : 𝕍 v c) : 𝕍 (u ⊔ v) c := by
-  let .clos m γ := c; cases m with (try simp [𝕍] at *; try contradiction)
+  let .clos m γ := c; cases m with (try simp only [𝕍, «Prop».bot_eq_false] at *; try contradiction)
   | lam => unfold 𝕍; exact ⟨uc, vc⟩
 
 lemma 𝕍.of_not_gtFn (nf : ¬ GtFn v) : 𝕍 v (.clos (ƛ n) γ') := by induction v with unfold 𝕍
@@ -115,7 +121,7 @@ lemma 𝕍.of_not_gtFn (nf : ¬ GtFn v) : 𝕍 v (.clos (ƛ n) γ') := by induct
 | conj _ _ ih ih' => exact not_gtFn_conj_inv nf |>.imp ih ih'
 
 lemma 𝕍.sub {v v'} (vvc : 𝕍 v c) (lt : v' ⊑ v) : 𝕍 v' c := by
-  let .clos m γ := c; cases m with (try simp [𝕍] at *; try contradiction) | lam m =>
+  let .clos m γ := c; cases m with (try simp only [𝕍, «Prop».bot_eq_false] at *; try contradiction) | lam m =>
     rename_i Γ; induction lt generalizing Γ with
     | bot => unfold 𝕍; trivial
     | conjL _ _ ih ih' => unfold 𝕍; exact ⟨ih _ _ _ vvc, ih' _ _ _ vvc⟩

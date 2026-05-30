@@ -5,6 +5,10 @@ module
 public import Plfl.Init
 public import Plfl.Untyped
 public import Plfl.Untyped.Substitution
+import Mathlib.Data.Nat.Notation
+import Mathlib.Tactic.Convert
+public import Mathlib.Order.Notation
+import Mathlib.Tactic.Basic
 
 @[expose] public section
 

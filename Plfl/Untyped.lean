@@ -3,6 +3,9 @@ module
 -- https://plfa.github.io/Untyped/
 
 public import Plfl.Init
+import Mathlib.Data.Nat.Notation
+public import Mathlib.Logic.Equiv.Defs
+import Mathlib.Tactic.Basic
 
 @[expose] public section
 

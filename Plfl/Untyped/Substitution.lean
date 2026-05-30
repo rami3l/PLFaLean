@@ -4,7 +4,9 @@ module
 
 public import Plfl.Init
 public import Plfl.Untyped
-
+import Batteries.Tactic.Init
+import Batteries.Logic
+import Mathlib.Tactic
 @[expose] public section
 
 namespace Substitution
@@ -70,7 +72,7 @@ section
     simp only [rename_subst_ren]; congr
 
   theorem exts_cons_shift : exts (a := a) (b := b) σ = (‵ .z ⦂⦂ (σ ⨟ shift)) := by
-    funext i; cases i <;> simp [exts, seq, cons, rename_shift]
+    funext i; cases i <;> simp only [exts, rename_shift, cons, seq, Function.comp_apply]
 
   theorem ext_cons_z_shift : @Eq (Γ‚ b ∋ a → Δ‚ b ⊢ a) (ren (ext ρ)) (‵ .z ⦂⦂ (ren ρ ⨟ shift)) := by
     funext i; cases i <;> simp only [ren_ext, exts, rename_subst_ren, ren_shift]; rfl

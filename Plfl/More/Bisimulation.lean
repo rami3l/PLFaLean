@@ -4,6 +4,7 @@ module
 
 public import Plfl.Init
 public import Plfl.More
+import Mathlib.Tactic.Basic
 
 @[expose] public section
 

@@ -5,6 +5,7 @@ module
 public meta import Plfl.Init
 public meta import Plfl.Lambda
 import Plfl.Lambda
+import Mathlib.Tactic.Basic
 
 @[expose] public section
 
