@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Bisimulation/
 
-public import Plfl.Init
 public import Plfl.More
 import Mathlib.Tactic.Basic
 

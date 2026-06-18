@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Untyped/
 
-public import Plfl.Init
 import Mathlib.Data.Nat.Notation
 public import Mathlib.Logic.Equiv.Defs
 import Mathlib.Tactic.Basic
@@ -23,7 +22,7 @@ end Notation
 open Notation
 
 -- https://plfa.github.io/Untyped/#exercise-type-practice
-instance : Ty ≃ Unit where
+def equivTyUnit : Ty ≃ Unit where
   toFun _ := ()
   invFun _ := ✶
   left_inv _ := by simp only
@@ -50,7 +49,7 @@ namespace Notation
 end Notation
 
 -- https://plfa.github.io/Untyped/#exercise-context%E2%84%95-practice
-instance Context.equiv_nat : Context ≃ ℕ where
+def Context.equiv_nat : Context ≃ ℕ where
   toFun := List.length
   invFun := (List.replicate · (✶))
   left_inv := left_inv

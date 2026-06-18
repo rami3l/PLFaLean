@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Soundness/
 
-public import Plfl.Init
 public import Plfl.Untyped.Denotational.Compositional
 
 @[expose] public section
@@ -118,16 +117,16 @@ theorem subst_reflect {σ : Subst Γ Δ} (d : δ ⊢ l ￬ v) (h : ⟪σ⟫ m = 
   induction d generalizing Γ with
   | bot => exists ⊥; exact ⟨subst_bot, .bot⟩
   | var => cases m with try contradiction
-    | var j => apply subst_reflect_var; convert Eval.var
+    | var j => apply subst_reflect_var; convert Eval.var using 1; exact h
   | ap d d' ih ih' => rename_i l' _ _ m'; cases m with try contradiction
-    | var => apply subst_reflect_var; convert d.ap d'
+    | var => apply subst_reflect_var; convert d.ap d' using 1; exact h
     | ap =>
       injection h; rename_i h h'
       let ⟨γ, dγ, dm⟩ := ih h; let ⟨γ', dγ', dm'⟩ := ih' h'; exists γ ⊔ γ'; constructor
       · exact subst_conj dγ dγ'
       · exact (sub_env dm <| Env.Sub.conjR₁ γ γ').ap (sub_env dm' <| Env.Sub.conjR₂ γ γ')
   | fn d ih => cases m with try contradiction
-    | var => apply subst_reflect_var; convert d.fn
+    | var => apply subst_reflect_var; convert d.fn using 1; exact h
     | lam =>
       injection h; rename_i h; let ⟨γ, dγ, dm⟩ := ih h; exists γ.init; constructor
       · intro i; exact rename_shift_reflect <| dγ i.s

@@ -2,7 +2,7 @@ module
 
 -- https://plfa.github.io/Properties/
 
-public meta import Plfl.Init
+import Plfl.Init.Tactics
 public meta import Plfl.Lambda
 import Plfl.Lambda
 import Mathlib.Tactic.Basic
@@ -78,7 +78,7 @@ namespace Canonical
   /--
   The Canonical forms are exactly the well-typed values.
   -/
-  instance : Canonical v t ≃ (∅ ⊢ v ⦂ t) × Value v where
+  def equivWellTyped : Canonical v t ≃ (∅ ⊢ v ⦂ t) × Value v where
     toFun := wellTyped
     invFun := wellTypedInv
     left_inv := wellTyped_left_inv
@@ -162,7 +162,7 @@ namespace Progress
   @[simp] def toProgress' : Progress m → Progress' m | step r => inr ⟨_, r⟩ | done v => inl v
   @[simp] def fromProgress' : Progress' m → Progress m | inl v => done v | inr ⟨_, r⟩ => step r
 
-  instance : Progress m ≃ Progress' m where
+  def equivProgress' : Progress m ≃ Progress' m where
     toFun := toProgress'
     invFun := fromProgress'
     left_inv := by intro x; cases x <;> simp_all only [fromProgress', toProgress']

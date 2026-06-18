@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/BigStep/
 
-public import Plfl.Init
 public import Plfl.Untyped
 public import Plfl.Untyped.Substitution
 import Mathlib.Logic.Lemmas

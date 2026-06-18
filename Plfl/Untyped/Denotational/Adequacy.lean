@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Adequacy/
 
-public import Plfl.Init
 public import Plfl.Untyped.BigStep
 public import Plfl.Untyped.Denotational.Soundness
 public import Mathlib.Tactic

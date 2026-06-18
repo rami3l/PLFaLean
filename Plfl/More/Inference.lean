@@ -2,7 +2,9 @@ module
 
 -- https://plfa.github.io/Inference/
 
-public meta import Plfl.Init
+import Plfl.Init.Tactics
+meta import Plfl.Init.Decidable'
+public import Plfl.Init.Decidable'
 public import Plfl.More
 
 @[expose] public section
