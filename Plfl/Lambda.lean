@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Lambda/
 
-public import Plfl.Init
 import Mathlib.Data.Nat.Notation
 import Mathlib.Tactic.ApplyFun
 public import Mathlib.Logic.Embedding.Basic
@@ -214,7 +213,7 @@ namespace Term.Reduce
     apply_fun Clos'.toClos at h
     rwa [←toClos'_left_inv (x := a), ←toClos'_left_inv (x := b)]
 
-  instance Clos.embedsInClos' : (m —↠ n) ↪ (m —↠' n) where
+  def Clos.embedsInClos' : (m —↠ n) ↪ (m —↠' n) where
     toFun := toClos'
     inj' := toClos'_inj
 end Term.Reduce

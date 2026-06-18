@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Compositional/
 
-public import Plfl.Init
 public import Plfl.Untyped.Denotational
 public import Mathlib.Order.BooleanAlgebra.Defs
 

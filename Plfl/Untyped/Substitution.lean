@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Substitution/#plfa_plfa-part2-Substitution-2341
 
-public import Plfl.Init
 public import Plfl.Untyped
 import Batteries.Tactic.Init
 import Batteries.Logic
@@ -179,7 +178,9 @@ section
     · rename_i x
       change ⟪fun {a} => subst₁σ m⟫ (exts (fun {a} => σ) (.s x)) = σ x
       simp only [exts, Subst.shift, rename_subst]
-      convert sub_ids (m := σ x) using 2
+      have : (fun {a} => subst₁σ m ∘ Lookup.s) = (fun {a} => @ids Δ a) := by
+        funext _ i; rfl
+      simp only [this, sub_ids]
 
   variable {n : Γ‚ ✶ ⊢ ✶} {m : Γ ⊢ ✶}
 

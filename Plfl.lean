@@ -1,6 +1,5 @@
 module
 prelude
-public import Plfl.Init
 public import Plfl.Lambda
 public import Plfl.Lambda.Properties
 public import Plfl.DeBruijn

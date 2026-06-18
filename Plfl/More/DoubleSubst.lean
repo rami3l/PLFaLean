@@ -4,7 +4,8 @@ module
 
 -- Adapted from <https://github.com/kaa1el/plfa_solution/blob/c5869a34bc4cac56cf970e0fe38874b62bd2dafc/src/plfa/demo/DoubleSubstitutionDeBruijn.agda>.
 
-public import Plfl.Init
+public import Plfl.Init.Tactics
+public import Plfl.Init.Lemmas
 public import Plfl.More
 
 @[expose] public section

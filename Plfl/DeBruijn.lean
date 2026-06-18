@@ -2,7 +2,7 @@ module
 
 -- https://plfa.github.io/DeBruijn/
 
-import Plfl.Init
+import Plfl.Init.Tactics
 import Batteries.Tactic.Init
 import Mathlib.Data.Nat.Notation
 import Mathlib.Tactic.Basic

@@ -2,7 +2,7 @@ module
 
 -- https://plfa.github.io/More/
 
-public import Plfl.Init
+import Plfl.Init.Tactics
 import Batteries.Tactic.Init
 public import Mathlib.Data.Matrix.Mul
 

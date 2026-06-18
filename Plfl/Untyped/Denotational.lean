@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Denotational/
 
-public import Plfl.Init
 public import Plfl.Untyped
 public import Plfl.Untyped.Substitution
 import Mathlib.Data.Nat.Notation

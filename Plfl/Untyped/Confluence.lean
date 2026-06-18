@@ -2,7 +2,6 @@ module
 
 -- https://plfa.github.io/Confluence/
 
-public import Plfl.Init
 public import Plfl.Untyped
 public import Plfl.Untyped.Substitution
 
@@ -79,7 +78,7 @@ namespace PReduce
       _ —↠ l' □ m' := Untyped.Reduce.ap_congr₂ (toReduceClos rm)
 end PReduce
 
-instance instNonemptyPReduceReduceClos : (m ⇛* n) ≃ (m —↠ n) where
+def equivPReduceClosReduceClos : (m ⇛* n) ≃ (m —↠ n) where
   toFun := toFun
   invFun := invFun
   left_inv _ := by simp only
@@ -153,14 +152,14 @@ namespace Notation
 end Notation
 
 theorem par_triangle {m n : Γ ⊢ a} : (m ⇛ n) → (n ⇛ m⁺) := open PReduce in by
-intro
-| .var => exact .var
-| .lamβ pn pv => exact subst_par (par_subst₁σ (par_triangle pv)) (par_triangle pn)
-| .lamζ pn => exact lamζ (par_triangle pn)
-| .apξ pl pm => rename_i l l' m m'; match l with
-  | ‵ _ => exact apξ (par_triangle pl) (par_triangle pm)
-  | _ □ _ => exact apξ (par_triangle pl) (par_triangle pm)
-  | ƛ _  => have .lamζ pl := pl; exact lamβ (par_triangle pl) (par_triangle pm)
+  intro p; match p with
+  | .var => exact .var
+  | .lamβ pn pv => exact subst_par (par_subst₁σ (par_triangle pv)) (par_triangle pn)
+  | .lamζ pn => exact lamζ (par_triangle pn)
+  | .apξ pl pm => rename_i l l' m m'; match l with
+    | ‵ _ => exact apξ (par_triangle pl) (par_triangle pm)
+    | _ □ _ => exact apξ (par_triangle pl) (par_triangle pm)
+    | ƛ _ => match pl with | .lamζ pl => exact lamβ (par_triangle pl) (par_triangle pm)
 
 theorem par_diamond {m n n' : Γ ⊢ a} (p : m ⇛ n) (p' : m ⇛ n')
 : ∃ (l : Γ ⊢ a), (n ⇛ l) ∧ (n' ⇛ l)
@@ -189,6 +188,6 @@ theorem par_confluence {l m m' : Γ ⊢ a} (lm : l ⇛* m) (lm' : l ⇛* m')
 theorem confluence {l m m' : Γ ⊢ a} (lm : l —↠ m) (lm' : l —↠ m')
 : ∃ (n : Γ ⊢ a), (m —↠ n) ∧ (m' —↠ n)
 := by
-  let equiv := @instNonemptyPReduceReduceClos Γ a
+  let equiv := @equivPReduceClosReduceClos Γ a
   have ⟨n, mn, m'n⟩:= par_confluence (equiv.invFun lm) (equiv.invFun lm')
   exists n; exact ⟨equiv.toFun mn, equiv.toFun m'n⟩
