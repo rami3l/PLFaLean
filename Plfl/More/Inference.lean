@@ -14,7 +14,7 @@ namespace Inference
 -- https://plfa.github.io/Inference/#syntax
 open String
 
-def Sym : Type := String deriving BEq, DecidableEq, Repr
+abbrev Sym : Type := String
 
 inductive Ty where
 /-- Native natural type made of 𝟘 and ι. -/
@@ -184,6 +184,7 @@ namespace Notation
   scoped macro "♯ " n:term:90 : term => `(by get_elem $n)
 end Notation
 
+open Notation in
 instance : Repr (Γ ∋ m ⦂ a) where reprPrec i n := "♯" ++ reprPrec n (sizeOf i)
 
 /--

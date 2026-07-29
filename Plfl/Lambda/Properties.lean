@@ -165,8 +165,8 @@ namespace Progress
   def equivProgress' : Progress m ≃ Progress' m where
     toFun := toProgress'
     invFun := fromProgress'
-    left_inv := by intro x; cases x <;> simp_all only [fromProgress', toProgress']
-    right_inv := by intro x; cases x <;> simp_all only [toProgress', fromProgress']
+    left_inv := by intro | step _ => rfl | done _ => rfl
+    right_inv := by intro | inl _ => rfl | inr ⟨n, r⟩ => rfl
 end Progress
 
 -- https://plfa.github.io/Properties/#renaming
