@@ -92,13 +92,11 @@ section
     | ƛ n =>
       apply congr_arg Term.lam
       convert sub_ids
-      simp_all only
-      ext x_1 x_2 : 2
       simp_all only [exts_ids]
     | l □ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact sub_ids
 
   theorem rename_id : rename (λ {_} x => x) m = m := by
-    convert sub_ids; ext; simp only [rename_subst_ren, ren]; congr
+    rw [rename_subst_ren]; exact sub_ids
 
   -- https://plfa.github.io/Substitution/#proof-of-sub-idr
   theorem seq_ids : @Eq (Γ ∋ a → Δ ⊢ a) (σ ⨟ ids) σ := by

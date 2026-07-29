@@ -12,7 +12,7 @@ namespace Lambda
 
 open String
 
-def Sym : Type := String deriving BEq, DecidableEq, Repr
+abbrev Sym : Type := String
 
 -- https://plfa.github.io/Lambda/#syntax-of-terms
 inductive Term where
@@ -326,7 +326,7 @@ namespace Context
   : ∅‚ "x" ⦂ ℕt =⇒ ℕt‚ "y" ⦂ ℕt‚ "z" ⦂ ℕt
   ∋ "x" ⦂ ℕt =⇒ ℕt
   := open Lookup in by
-    apply s _; apply s _; apply z; repeat trivial
+    apply s (by decide); apply s (by decide); apply z
 
   -- https://plfa.github.io/Lambda/#lookup-is-functional
   theorem Lookup.functional : Γ ∋ x ⦂ t → Γ ∋ x ⦂ t' → t = t' := by intro
@@ -368,7 +368,7 @@ namespace Context
   syntax "lookup_var" : tactic
   macro_rules
   | `(tactic| lookup_var) =>
-    `(tactic| apply IsTy.tyVar; repeat (first | apply Lookup.s (by trivial) | exact Lookup.z))
+    `(tactic| apply IsTy.tyVar; repeat (first | apply Lookup.s (by decide) | exact Lookup.z))
 
   -- Inform `trivial` of our new tactic.
   macro_rules | `(tactic| trivial) => `(tactic| lookup_var)
