@@ -422,7 +422,7 @@ theorem preserves_unstuck : ∅ ⊢ m ⦂ t → (m —↠ n) → IsEmpty (Stuck 
   intro j r; have := preserves j r; exact unstuck this
 
 -- https://plfa.github.io/Properties/#reduction-is-deterministic
-def Reduce.det : (m —→ n) → (m —→ n') → n = n' := by
+theorem Reduce.det : (m —→ n) → (m —→ n') → n = n' := by
   intro r r'; cases r
   · case lamβ =>
     cases r' <;> try trivial

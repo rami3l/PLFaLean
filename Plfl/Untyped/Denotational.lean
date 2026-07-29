@@ -51,26 +51,26 @@ end Notation
 instance : Trans Sub Sub Sub where trans := .trans
 
 @[refl]
-def Sub.refl : v ⊑ v := match v with
+theorem Sub.refl : v ⊑ v := match v with
 | ⊥ => .bot
 | _ ⇾ _ => .fn refl refl
 | .conj _ _ => .conjL (.conjR₁ refl) (.conjR₂ refl)
 
-def sub_of_sub_bot (d : v ⊑ ⊥) : v ⊑ u := d.trans .bot
+theorem sub_of_sub_bot (d : v ⊑ ⊥) : v ⊑ u := d.trans .bot
 
 /-- The `⊔` operation is monotonic with respect to `⊑`. -/
-def conj_sub_conj (d₁ : v ⊑ v') (d₂ : w ⊑ w') : v ⊔ w ⊑ v' ⊔ w' :=
+theorem conj_sub_conj (d₁ : v ⊑ v') (d₂ : w ⊑ w') : v ⊔ w ⊑ v' ⊔ w' :=
   .conjL (.conjR₁ d₁) (.conjR₂ d₂)
 
-def fn_conj_sub_conj_fn : (v ⊔ v') ⇾ (w ⊔ w') ⊑ (v ⇾ w) ⊔ (v' ⇾ w') := calc
+theorem fn_conj_sub_conj_fn : (v ⊔ v') ⇾ (w ⊔ w') ⊑ (v ⇾ w) ⊔ (v' ⇾ w') := calc
   _ ⊑ ((v ⊔ v') ⇾ w) ⊔ ((v ⊔ v') ⇾ w') := .dist
-  _ ⊑ (v ⇾ w) ⊔ (v' ⇾ w') := open Sub in by
+  _ ⊑ (v ⇾ w) ⊔ (v' ⇾ w') := open Denotational.Sub in by
     apply conj_sub_conj <;> refine .fn ?_ .refl
     · apply conjR₁; rfl
     · apply conjR₂; rfl
 
 -- https://leanprover.zulipchat.com/#narrow/stream/113489-new-members/topic/Termination.20of.20head.20induction.20on.20.60ReflTransGen.60/near/375468050
-def conj_sub₁ (h : u ⊔ v ⊑ w) : u ⊑ w := by
+theorem conj_sub₁ (h : u ⊔ v ⊑ w) : u ⊑ w := by
   generalize hx : u ⊔ v = x at *
   induction h with (subst_vars; try cases hx)
   | conjL h _ => exact h
@@ -78,7 +78,7 @@ def conj_sub₁ (h : u ⊔ v ⊑ w) : u ⊑ w := by
   | conjR₂ h ih => exact .conjR₂ (ih rfl)
   | trans h h' ih => exact .trans (ih rfl) h'
 
-def conj_sub₂ (h : u ⊔ v ⊑ w) : v ⊑ w := by
+theorem conj_sub₂ (h : u ⊔ v ⊑ w) : v ⊑ w := by
   generalize hx : u ⊔ v = x at *
   induction h with (subst_vars; try cases hx)
   | conjL _ h => exact h
@@ -132,15 +132,15 @@ namespace Notation
 end Notation
 
 namespace Env.Sub
-  @[refl] def refl : γ `⊑ γ | _ => .refl
-  @[simp] def conjR₁ (γ δ : Env Γ) : γ `⊑ (γ ⊔ δ) | _ => .conjR₁ .refl
-  @[simp] def conjR₂ (γ δ : Env Γ) : δ `⊑ (γ ⊔ δ) | _ => .conjR₂ .refl
+  @[refl] theorem refl : γ `⊑ γ | _ => .refl
+  @[simp] theorem conjR₁ (γ δ : Env Γ) : γ `⊑ (γ ⊔ δ) | _ => .conjR₁ .refl
+  @[simp] theorem conjR₂ (γ δ : Env Γ) : δ `⊑ (γ ⊔ δ) | _ => .conjR₂ .refl
 
-  def ext_le (lt : v ⊑ v') : (γ`‚ v) `⊑ (γ`‚ v')
+  theorem ext_le (lt : v ⊑ v') : (γ`‚ v) `⊑ (γ`‚ v')
   | .z => lt
   | .s _ => .refl
 
-  def le_ext (lt : γ `⊑ γ') : (γ`‚ v) `⊑ (γ'`‚ v)
+  theorem le_ext (lt : γ `⊑ γ') : (γ`‚ v) `⊑ (γ'`‚ v)
   | .z => .refl
   | .s _ => by apply lt
 end Env.Sub
@@ -165,7 +165,7 @@ end Notation
 Relaxation of table lookup in application,
 allowing an argument to match an input entry if the latter is less than the former.
 -/
-def Eval.ap_sub (d : γ ⊢ l ￬ v ⇾ w) (d' : γ ⊢ m ￬ v') (lt : v ⊑ v') : γ ⊢ l □ m ￬ w
+theorem Eval.ap_sub (d : γ ⊢ l ￬ v ⇾ w) (d' : γ ⊢ m ￬ v') (lt : v ⊑ v') : γ ⊢ l □ m ￬ w
 := d.ap <| d'.sub lt
 
 namespace Example
@@ -173,26 +173,26 @@ namespace Example
   open Eval
 
   -- `id` can be seen as a mapping table for both `⊥ ⇾ ⊥` and `(⊥ ⇾ ⊥) ⇾ (⊥ ⇾ ⊥)`.
-  def denot_id₁ : γ ⊢ id ￬ ⊥ ⇾ ⊥ := .fn .var
-  def denot_id₂ : γ ⊢ id ￬ (⊥ ⇾ ⊥) ⇾ (⊥ ⇾ ⊥) := .fn .var
+  theorem denot_id₁ : γ ⊢ id ￬ ⊥ ⇾ ⊥ := .fn .var
+  theorem denot_id₂ : γ ⊢ id ￬ (⊥ ⇾ ⊥) ⇾ (⊥ ⇾ ⊥) := .fn .var
 
   -- `id` also produces a table containing both of the previous tables.
-  def denot_id₃ : γ ⊢ id ￬ (⊥ ⇾ ⊥) ⊔ ((⊥ ⇾ ⊥) ⇾ (⊥ ⇾ ⊥)) := denot_id₁.conj denot_id₂
+  theorem denot_id₃ : γ ⊢ id ￬ (⊥ ⇾ ⊥) ⊔ ((⊥ ⇾ ⊥) ⇾ (⊥ ⇾ ⊥)) := denot_id₁.conj denot_id₂
 
   -- Oops, self application!
-  def denot_id_ap_id : `∅ ⊢ id □ id ￬ v ⇾ v := .ap (.fn .var) (.fn .var)
+  theorem denot_id_ap_id : `∅ ⊢ id □ id ￬ v ⇾ v := .ap (.fn .var) (.fn .var)
 
   -- In `def twoC f u := f (f u)`,
   -- `f`'s table must include two entries, both `u ⇾ v` and `v ⇾ w`.
   -- `twoC` then merges those two entries into one: `u ⇾ w`.
-  def denot_twoC : `∅ ⊢ twoC ￬ (u ⇾ v ⊔ v ⇾ w) ⇾ u ⇾ w := by
+  theorem denot_twoC : `∅ ⊢ twoC ￬ (u ⇾ v ⊔ v ⇾ w) ⇾ u ⇾ w := by
     apply fn; apply fn; apply ap
     · apply sub .var; exact .conjR₂ .refl
     · apply ap
       · apply sub .var; exact .conjR₁ .refl
       · exact .var
 
-  def denot_delta : `∅ ⊢ delta ￬ (v ⇾ w ⊔ v) ⇾ w := by
+  theorem denot_delta : `∅ ⊢ delta ￬ (v ⇾ w ⊔ v) ⇾ w := by
     apply fn; apply ap (v := v) <;> apply sub .var
     · exact .conjR₁ .refl
     · exact .conjR₂ .refl
@@ -202,7 +202,7 @@ namespace Example
     · exact fn (v := ⊥) .bot
     · exact .bot
 
-  def denot_omega : `∅ ⊢ omega ￬ ⊥ := .bot
+  theorem denot_omega : `∅ ⊢ omega ￬ ⊥ := .bot
 
   -- https://plfa.github.io/Denotational/#exercise-denot-plus%E1%B6%9C-practice
 
@@ -211,7 +211,7 @@ namespace Example
   · n u v = w
   · m u w = x
   -/
-  def denot_addC
+  theorem denot_addC
   : let m := u ⇾ w ⇾ x
     let n := u ⇾ v ⇾ w
     `∅ ⊢ addC ￬ m ⇾ n ⇾ u ⇾ v ⇾ x
@@ -244,18 +244,18 @@ section
   -- https://plfa.github.io/Denotational/#renaming-preserves-denotations
   variable {γ : Env Γ} {δ : Env Δ}
 
-  def ext_sub (ρ : Rename Γ Δ) (lt : γ `⊑ δ ∘ ρ)
+  theorem ext_sub (ρ : Rename Γ Δ) (lt : γ `⊑ δ ∘ ρ)
   : (γ`‚ v) `⊑ (δ`‚ v) ∘ ext ρ
   | .z => .refl
   | .s i => lt i
 
-  def ext_sub' (ρ : Rename Γ Δ) (lt : δ ∘ ρ `⊑ γ)
+  theorem ext_sub' (ρ : Rename Γ Δ) (lt : δ ∘ ρ `⊑ γ)
   : (δ`‚ v) ∘ ext ρ `⊑ (γ`‚ v)
   | .z => .refl
   | .s i => lt i
 
   /-- The result of evaluation is conserved after renaming. -/
-  def rename_pres (ρ : Rename Γ Δ) (lt : γ `⊑ δ ∘ ρ) (d : γ ⊢ m ￬ v)
+  theorem rename_pres (ρ : Rename Γ Δ) (lt : γ `⊑ δ ∘ ρ) (d : γ ⊢ m ￬ v)
   : δ ⊢ rename ρ m ￬ v
   := by induction d generalizing Δ with
   | var => apply sub .var; apply lt
@@ -270,7 +270,7 @@ section
   variable {γ δ : Env Γ}
 
   /-- The result of evaluation is conserved under a superset. -/
-  def sub_env (d : γ ⊢ m ￬ v) (lt : γ `⊑ δ) : δ ⊢ m ￬ v := by
+  theorem sub_env (d : γ ⊢ m ￬ v) (lt : γ `⊑ δ) : δ ⊢ m ￬ v := by
     convert rename_pres id lt d; exact rename_id.symm
 
   lemma up_env (d : (γ`‚ u) ⊢ m ￬ v) (lt : u ⊑ u') : (γ`‚ u') ⊢ m ￬ v := by
@@ -302,7 +302,7 @@ section
   open Eval
   open Env.Sub
 
-  def denot_church {vs} : `∅ ⊢ church n ￬ Value.church n vs := by
+  theorem denot_church {vs} : `∅ ⊢ church n ￬ Value.church n vs := by
     apply_rules [fn]; induction n with
     | zero => exact var
     | succ n r =>
@@ -336,8 +336,8 @@ namespace Value
   instance : Trans Subset Subset Included where trans := instTrans.trans
 
   variable {u v w : Value}
-  def Included.fst (s : Included (u ⊔ v) w) : u ⊆ w := s ∘ Or.inl
-  def Included.snd (s : Included (u ⊔ v) w) : v ⊆ w := s ∘ Or.inr
+  theorem Included.fst (s : Included (u ⊔ v) w) : u ⊆ w := s ∘ Or.inl
+  theorem Included.snd (s : Included (u ⊔ v) w) : v ⊆ w := s ∘ Or.inr
 end Value
 
 theorem sub_of_elem (e : u ∈ v) : u ⊑ v := by
@@ -370,8 +370,8 @@ inductive IsFn (u : Value) : Prop where | isFn (h : u = v ⇾ w)
 def AllFn (v : Value) : Prop := ∀ {u}, u ∈ v → IsFn u
 
 namespace AllFn
-  def fst (f : AllFn (u ⊔ v)) : AllFn u := f ∘ Or.inl
-  def snd (f : AllFn (u ⊔ v)) : AllFn v := f ∘ Or.inr
+  theorem fst (f : AllFn (u ⊔ v)) : AllFn u := f ∘ Or.inl
+  theorem snd (f : AllFn (u ⊔ v)) : AllFn v := f ∘ Or.inr
 end AllFn
 
 lemma not_isFn_bot : ¬ IsFn ⊥ := nofun

@@ -97,9 +97,9 @@ end
 /-- `𝔾` relates `γ` to `γ'` if the corresponding values and closures are related by `𝔼` -/
 def 𝔾 (γ : Env Γ) (γ' : ClosEnv Γ) : Prop := ∀ {i : Γ ∋ ✶}, 𝔼 (γ i) (γ' i)
 
-def 𝔾.empty : 𝔾 `∅ ∅ := nofun
+theorem 𝔾.empty : 𝔾 `∅ ∅ := nofun
 
-def 𝔾.ext (g : 𝔾 γ γ') (e : 𝔼 v c) : 𝔾 (γ`‚ v) (γ'‚' c) := by unfold 𝔾; intro
+theorem 𝔾.ext (g : 𝔾 γ γ') (e : 𝔼 v c) : 𝔾 (γ`‚ v) (γ'‚' c) := by unfold 𝔾; intro
 | .z => exact e
 | .s _ => exact g
 

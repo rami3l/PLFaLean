@@ -58,13 +58,13 @@ namespace PReduce
   instance : Trans (α := Γ ⊢ a) PReduce Clos Clos where trans r c := .head r c
 
   -- https://plfa.github.io/Confluence/#equivalence-between-parallel-reduction-and-reduction
-  def fromReduce {Γ a} {m n : Γ ⊢ a} : m —→ n → (m ⇛ n)
+  theorem fromReduce {Γ a} {m n : Γ ⊢ a} : m —→ n → (m ⇛ n)
   | .lamβ => .lamβ (.refl _) (.refl _)
   | .lamζ rn => .lamζ (fromReduce rn)
   | .apξ₁ rl => .apξ (fromReduce rl) (.refl _)
   | .apξ₂ rm => .apξ (.refl _) (fromReduce rm)
 
-  def toReduceClos : (m ⇛ n) → (m —↠ n)
+  theorem toReduceClos : (m ⇛ n) → (m —↠ n)
   | .var => Untyped.Reduce.Clos.refl
   | .lamβ (n:=n) (n':=n') (v:=v) (v':=v') rn rv =>
     calc (ƛ n) □ v

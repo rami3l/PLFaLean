@@ -64,7 +64,7 @@ namespace Sim
       | lam => exact .lam
 
   -- https://plfa.github.io/Bisimulation/#simulation-commutes-with-renaming
-  def comm_rename (ρ : ∀ {a}, Γ ∋ a → Δ ∋ a) {m m' : Γ ⊢ a}
+  theorem comm_rename (ρ : ∀ {a}, Γ ∋ a → Δ ∋ a) {m m' : Γ ⊢ a}
   : m ~ m' → rename ρ m ~ rename ρ m'
   | .var => .var
   | .lam s => .lam (comm_rename (ext ρ) s)
@@ -72,14 +72,14 @@ namespace Sim
   | .let sl sm => .let (comm_rename ρ sl) (comm_rename (ext ρ) sm)
 
   -- https://plfa.github.io/Bisimulation/#simulation-commutes-with-substitution
-  def comm_exts {σ σ' : ∀ {a}, Γ ∋ a → Δ ⊢ a}
+  theorem comm_exts {σ σ' : ∀ {a}, Γ ∋ a → Δ ⊢ a}
   (gs : ∀ {a}, (x : Γ ∋ a) → σ x ~ σ' x)
   : (∀ {a b}, (x : Γ‚ b ∋ a) → exts σ x ~ exts σ' x)
   := by introv; match x with
   | .z => simp only [exts]; exact .var
   | .s x => simp only [exts]; apply comm_rename Lookup.s; apply gs
 
-  def comm_subst {σ σ' : ∀ {a}, Γ ∋ a → Δ ⊢ a}
+  theorem comm_subst {σ σ' : ∀ {a}, Γ ∋ a → Δ ⊢ a}
   (gs : ∀ {a}, (x : Γ ∋ a) → @σ a x ~ @σ' a x)
   {m m' : Γ ⊢ a}
   : m ~ m' → subst σ m ~ subst σ' m'
@@ -88,7 +88,7 @@ namespace Sim
   | .ap sl sm => .ap (comm_subst gs sl) (comm_subst gs sm)
   | .let sl sm => .let (comm_subst gs sl) (comm_subst (comm_exts gs) sm)
 
-  def comm_subst₁ {m m' : Γ ⊢ b} {n n' : Γ‚ b ⊢ a}
+  theorem comm_subst₁ {m m' : Γ ⊢ b} {n n' : Γ‚ b ⊢ a}
   (sm : m ~ m') (sn : n ~ n') : n⟦m⟧ ~ n'⟦m'⟧
   := by
     let σ {a} : Γ‚ b ∋ a → Γ ⊢ a := subst₁σ m
@@ -121,7 +121,7 @@ m' - —→ - n'
 inductive Leg (m' n : Γ ⊢ a) : Prop where
 | intro (sim : n ~ n') (red : m' —→ n')
 
-def Leg.fromLegInv {m m' n : Γ ⊢ a} : (m ~ m') → (m —→ n) → Leg m' n
+theorem Leg.fromLegInv {m m' n : Γ ⊢ a} : (m ~ m') → (m —→ n) → Leg m' n
   | .ap (.lam sl) sm, .lamβ v => .intro (comm_subst₁ sm sl) (.lamβ (commValue sm v))
   | .ap sl sm, .apξ₁ r =>
     let ⟨s', r'⟩ := fromLegInv sl r; .intro (.ap s' sm) (.apξ₁ r')
@@ -145,7 +145,7 @@ m - —→ - n
 inductive LegInv (m n' : Γ ⊢ a) : Prop where
 | intro (sim : n ~ n') (red : m —→ n)
 
-def LegInv.fromLeg {m m' n' : Γ ⊢ a} : (m ~ m') → (m' —→ n') → LegInv m n'
+theorem LegInv.fromLeg {m m' n' : Γ ⊢ a} : (m ~ m') → (m' —→ n') → LegInv m n'
   | .ap (.lam sl) sm, .lamβ v => .intro (comm_subst₁ sm sl) (.lamβ (commValue' sm v))
   | .ap sl sm, .apξ₁ r =>
     let ⟨s', r'⟩ := fromLeg sl r; .intro (.ap s' sm) (.apξ₁ r')
