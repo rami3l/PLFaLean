@@ -45,9 +45,15 @@ namespace Term
   example : Term := 1
   example : Term := 42
 
-  abbrev add : Term := μ "+" ⇒ ƛ "m" ⇒ ƛ "n" ⇒ 𝟘? ‵"m" [zero⇒ ‵"n" |succ "m"⇒ ι (‵"+" ⬝ ‵"m" ⬝ ‵"n")]
+  abbrev add : Term := μ "+" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
+    𝟘? ‵"m"
+      [zero⇒ ‵"n"
+      |succ "m"⇒ ι (‵"+" ⬝ ‵"m" ⬝ ‵"n")]
   -- https://plfa.github.io/Lambda/#exercise-mul-recommended
-  abbrev mul : Term := μ "*" ⇒ ƛ "m" ⇒ ƛ "n" ⇒ 𝟘? ‵"m" [zero⇒ 𝟘 |succ "m"⇒ add ⬝ ‵"n" $ ‵"*" ⬝ ‵"m" ⬝ ‵"n"]
+  abbrev mul : Term := μ "*" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
+    𝟘? ‵"m"
+      [zero⇒ 𝟘
+      |succ "m"⇒ add ⬝ ‵"n" $ ‵"*" ⬝ ‵"m" ⬝ ‵"n"]
 
   -- Church encoding...
   abbrev succC : Term := ƛ "n" ⇒ ι ‵"n"
@@ -90,7 +96,7 @@ namespace Primed
     μ′ «+» ⇒ ƛ′ m ⇒ ƛ′ n ⇒
       𝟘?′ m
         [zero⇒ n
-        |suc m ⇒ ι («+» □ m □ n)]
+        |suc m ⇒ ι («+» ⬝ m ⬝ n)]
 
   example : plus' = Term.add := rfl
 
@@ -101,7 +107,7 @@ namespace Primed
     μ′ «*» ⇒ ƛ′ m ⇒ ƛ′ n ⇒
       𝟘?′ m
         [zero⇒ 𝟘
-        |suc m ⇒ Term.add □ n $ «*» □ m □ n]
+        |suc m ⇒ Term.add ⬝ n $ «*» ⬝ m ⬝ n]
 
   example : mul' = Term.mul := rfl
 end Primed
