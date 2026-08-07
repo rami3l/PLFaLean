@@ -58,6 +58,54 @@ namespace Term
   abbrev mulC : Term := ƛ "m" ⇒ ƛ "n" ⇒ ƛ "s" ⇒ ƛ "z" ⇒ ‵"m" ⬝ (‵"n" ⬝ ‵"s") ⬝ ‵"z"
 end Term
 
+-- https://plfa.github.io/Lambda/#primed
+namespace Primed
+  open Term
+
+  def var? : Term → Bool
+  | ‵_ => true
+  | _ => false
+
+  def getVar : (t : Term) → (h : var? t = true := by rfl) → Sym
+  | ‵x, _ => x
+
+  def lam' (t : Term) (n : Term) (h : var? t = true := by rfl) : Term :=
+    .lam (getVar t h) n
+
+  def case' (l m t n : Term) (h : var? t = true := by rfl) : Term :=
+    .case l m (getVar t h) n
+
+  def mu' (t : Term) (n : Term) (h : var? t = true := by rfl) : Term :=
+    .mu (getVar t h) n
+
+  notation:50 "ƛ′ " v " ⇒ " d => lam' v d
+  notation:50 "μ′ " v " ⇒ " d => mu' v d
+  notation:max "𝟘?′ " e " [zero⇒ " o " |suc " n " ⇒ " i " ] " => case' e o n i
+
+  -- https://plfa.github.io/Lambda/#exercise-primed-stretch
+  def plus' : Term :=
+    let «+» : Term := ‵"+"
+    let m : Term := ‵"m"
+    let n : Term := ‵"n"
+    μ′ «+» ⇒ ƛ′ m ⇒ ƛ′ n ⇒
+      𝟘?′ m
+        [zero⇒ n
+        |suc m ⇒ ι («+» □ m □ n)]
+
+  example : plus' = Term.add := rfl
+
+  def mul' : Term :=
+    let «*» : Term := ‵"*"
+    let m : Term := ‵"m"
+    let n : Term := ‵"n"
+    μ′ «*» ⇒ ƛ′ m ⇒ ƛ′ n ⇒
+      𝟘?′ m
+        [zero⇒ 𝟘
+        |suc m ⇒ Term.add □ n $ «*» □ m □ n]
+
+  example : mul' = Term.mul := rfl
+end Primed
+
 -- https://plfa.github.io/Lambda/#values
 inductive Value : Term → Type where
 | lam : Value (ƛ v ⇒ d)
