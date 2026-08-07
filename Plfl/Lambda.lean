@@ -164,6 +164,69 @@ namespace Term
   = (ƛ "y" ⇒ 𝟘 $ ƛ "x" ⇒ ‵"x")
   := rfl
 
+  -- https://plfa.github.io/Lambda/#exercise-_-stretch
+  mutual
+    /--
+    Mutual helper for substitution dealing with bound variables.
+    If the bound variable `x` matches `y`, no substitution occurs in `n`;
+    otherwise, `y` is substituted with `v` inside `n`.
+    -/
+    def substVar (x y : Sym) (v n : Term) : Term :=
+      if x = y then n else n.subst' y v
+
+    /--
+    Substitution defined via mutual recursion with `substVar`.
+    -/
+    def subst' : Term → Sym → Term → Term
+    | ‵x, y, v => if x = y then v else ‵x
+    | ƛ x ⇒ n, y, v => ƛ x ⇒ substVar x y v n
+    | ap l m, y, v => l.subst' y v $ m.subst' y v
+    | 𝟘, _, _ => 𝟘
+    | ι n, y, v => ι (n.subst' y v)
+    | 𝟘? l [zero⇒ m |succ x⇒ n], y, v => 𝟘? l.subst' y v [zero⇒ m.subst' y v |succ x⇒ substVar x y v n]
+    | μ x⇒ n, y, v => μ x⇒ substVar x y v n
+  end
+
+  notation:90 x " [ " y " := " v " ]′ " => subst' x y v
+
+  theorem subst'_eq_subst (t : Term) (y : Sym) (v : Term) : t[y := v]′ = t[y := v] := by
+    induction t with
+    | var x =>
+      unfold subst' subst
+      split_ifs <;> rfl
+    | lam x n ih =>
+      unfold subst' substVar subst
+      split_ifs <;> simp [ih]
+    | ap l m ihl ihm =>
+      unfold subst' subst
+      simp [ihl, ihm]
+    | zero =>
+      unfold subst' subst
+      rfl
+    | succ n ih =>
+      unfold subst' subst
+      simp [ih]
+    | case l m x n ihl ihm ihn =>
+      unfold subst' substVar subst
+      split_ifs <;> simp [ihl, ihm, ihn]
+    | mu x n ih =>
+      unfold subst' substVar subst
+      split_ifs <;> simp [ih]
+
+  example
+  : (ƛ "z" ⇒ ‵"s" □ ‵"s" □ ‵"z")["s" := succC]′
+  = (ƛ "z" ⇒ succC □ succC □ ‵"z") := by rw [subst'_eq_subst]; rfl
+
+  example : (succC □ succC □ ‵"z")["z" := 𝟘]′ = succC □ succC □ 𝟘 := by rw [subst'_eq_subst]; rfl
+  example : (ƛ "x" ⇒ ‵"y")["y" := 𝟘]′ = (ƛ "x" ⇒ 𝟘) := by rw [subst'_eq_subst]; rfl
+  example : (ƛ "x" ⇒ ‵"x")["x" := 𝟘]′ = (ƛ "x" ⇒ ‵"x") := by rw [subst'_eq_subst]; rfl
+  example : (ƛ "y" ⇒ ‵"y")["x" := 𝟘]′ = (ƛ "y" ⇒ ‵"y") := by rw [subst'_eq_subst]; rfl
+
+  example
+  : (ƛ "y" ⇒ ‵"x" $ ƛ "x" ⇒ ‵"x")["x" := 𝟘]′
+  = (ƛ "y" ⇒ 𝟘 $ ƛ "x" ⇒ ‵"x")
+  := by rw [subst'_eq_subst]; rfl
+
   -- https://plfa.github.io/Lambda/#reduction
   /--
   `Reduce t t'` says that `t` reduces to `t'`.
