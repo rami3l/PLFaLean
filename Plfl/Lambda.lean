@@ -229,7 +229,7 @@ namespace Term
 
   -- https://plfa.github.io/Lambda/#reduction
   /--
-  `Reduce t t'` says that `t` reduces to `t'`.
+  `Reduce t t'` says that `t` reduces to `t'` (call-by-value algorithm).
   -/
   inductive Reduce : Term → Term → Type where
   | lamβ : Value v → Reduce ((ƛ x ⇒ n) ⬝ v) (n[x := v])
