@@ -29,7 +29,7 @@ theorem Reduce.empty_value : m —→ n → IsEmpty (Value m) := by
 
 -- https://plfa.github.io/Properties/#exercise-canonical--practice
 inductive Canonical : Term → Ty → Type where
-| canLam : ∅‚ x ⦂ t ⊢ n ⦂ u → Canonical (ƛ x : n) (t =⇒ u)
+| canLam : ∅‚ x ⦂ t ⊢ n ⦂ u → Canonical (ƛ x ⇒ n) (t =⇒ u)
 | canZero : Canonical 𝟘 ℕt
 | canSucc : Canonical n ℕt → Canonical (ι n) ℕt
 
@@ -318,7 +318,7 @@ section examples
   open Term
 
   -- def x : ℕ := x + 1
-  abbrev succμ := μ "x" : ι ‵"x"
+  abbrev succμ := μ "x" ⇒ ι ‵"x"
 
   abbrev tySuccμ : ∅ ⊢ succμ ⦂ ℕt := by
     apply tyMu; apply tySucc; trivial
@@ -357,7 +357,7 @@ section subject_expansion
   example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
     by_contra f
     simp_all only [isEmpty_pi, not_exists, not_isEmpty_iff]
-    let illCase := 𝟘? 𝟘 [zero: 𝟘 |succ "x" : add]
+    let illCase := 𝟘? 𝟘 [zero⇒ 𝟘 |succ "x" ⇒ add]
     have nty_ill : ∅ ⊬ illCase := by
       intro t
       refine ⟨fun j => ?_⟩
@@ -372,7 +372,7 @@ section subject_expansion
 example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
     by_contra f
     simp_all only [isEmpty_pi, not_exists, not_isEmpty_iff]
-    let illAp := (ƛ "x" : 𝟘) ⬝ illLam
+    let illAp := (ƛ "x" ⇒ 𝟘) ⬝ illLam
     have nty_ill : ∅ ⊬ illAp := by
       intro tt
       refine ⟨fun j => ?_⟩
