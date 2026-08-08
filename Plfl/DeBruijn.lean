@@ -84,7 +84,7 @@ namespace Term
   prefix:50 "μ " => mu
   notation "𝟘? " => case
   infixr:min " $ " => ap
-  infixl:70 " □ " => ap
+  infixl:70 " ⬝ " => ap
   prefix:80 "ι " => succ
   prefix:90 "‵" => var
   notation "𝟘" => zero
@@ -110,10 +110,10 @@ namespace Term
   example : Γ ⊢ ℕt := ι ι 𝟘
   example : Γ ⊢ ℕt := 2
 
-  @[simp] abbrev add : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) (#0) (ι (#3 □ #0 □ #1)))
-  @[simp] abbrev mul : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) 𝟘 (add □ #1 $ #3 □ #0 □ #1))
+  @[simp] abbrev add : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) (#0) (ι (#3 ⬝ #0 ⬝ #1)))
+  @[simp] abbrev mul : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) 𝟘 (add ⬝ #1 $ #3 ⬝ #0 ⬝ #1))
 
-  example : Γ ⊢ ℕt := add □ 2 □ 2
+  example : Γ ⊢ ℕt := add ⬝ 2 ⬝ 2
 
   /--
   The Church numeral Ty.
@@ -122,11 +122,11 @@ namespace Term
 
   @[simp] abbrev succC : Γ ⊢ ℕt =⇒ ℕt := ƛ ι #0
   @[simp] abbrev twoC : Γ ⊢ Ch a := ƛ ƛ (#1 $ #1 $ #0)
-  @[simp] abbrev addC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 □ #1 $ #2 □ #1 □ #0)
-  example : Γ ⊢ ℕt := addC □ twoC □ twoC □ succC □ 𝟘
+  @[simp] abbrev addC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 ⬝ #1 $ #2 ⬝ #1 ⬝ #0)
+  example : Γ ⊢ ℕt := addC ⬝ twoC ⬝ twoC ⬝ succC ⬝ 𝟘
 
   -- https://plfa.github.io/DeBruijn/#exercise-mul-recommended
-  @[simp] abbrev mulC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 □ (#2 □ #1) □ #0)
+  @[simp] abbrev mulC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 ⬝ (#2 ⬝ #1) ⬝ #0)
 end Term
 
 -- https://plfa.github.io/DeBruijn/#renaming
@@ -147,7 +147,7 @@ def rename : (∀ {a}, Γ ∋ a → Δ ∋ a) → Γ ⊢ a → Δ ⊢ a := by
   intro ρ; intro
   | ‵ x => exact ‵ (ρ x)
   | ƛ n => refine .lam ?_; refine rename ?_ n; exact ext ρ
-  | l □ m =>
+  | l ⬝ m =>
     apply Term.ap
     · exact rename ρ l
     · exact rename ρ m
@@ -186,7 +186,7 @@ def subst : (∀ {a}, Γ ∋ a → Δ ⊢ a) → Γ ⊢ a → Δ ⊢ a := by
   intro σ; intro
   | ‵ x => exact σ x
   | ƛ n => refine .lam ?_; refine subst ?_ n; exact exts σ
-  | l □ m =>
+  | l ⬝ m =>
     apply Term.ap
     · exact subst σ l
     · exact subst σ m
@@ -212,7 +212,7 @@ notation:90 n "⟦" m "⟧" => subst₁ m n
 example
 : let m : ∅ ⊢ ℕt =⇒ ℕt := ƛ (ι #0)
   let m' : ∅‚ ℕt =⇒ ℕt ⊢ ℕt =⇒ ℕt := ƛ (#1 $ #1 $ #0)
-  let n : ∅ ⊢ ℕt =⇒ ℕt := ƛ (ƛ ι #0) □ ((ƛ ι #0) □ #0)
+  let n : ∅ ⊢ ℕt =⇒ ℕt := ƛ (ƛ ι #0) ⬝ ((ƛ ι #0) ⬝ #0)
   m'⟦m⟧ = n
 := rfl
 
@@ -242,9 +242,9 @@ end Value
 `Reduce t t'` says that `t` reduces to `t'`.
 -/
 inductive Reduce : (Γ ⊢ a) → (Γ ⊢ a) → Type where
-| lamβ : Value w → Reduce ((ƛ n) □ w) (n⟦w⟧)
-| apξ₁ : Reduce l l' → Reduce (l □ m) (l' □ m)
-| apξ₂ : Value v → Reduce m m' → Reduce (v □ m) (v □ m')
+| lamβ : Value w → Reduce ((ƛ n) ⬝ w) (n⟦w⟧)
+| apξ₁ : Reduce l l' → Reduce (l ⬝ m) (l' ⬝ m)
+| apξ₂ : Value v → Reduce m m' → Reduce (v ⬝ m) (v ⬝ m')
 | zeroβ : Reduce (𝟘? 𝟘 m n) m
 | succβ : Value v → Reduce (𝟘? (ι v) m n) (n⟦v⟧)
 | succξ : Reduce m m' → Reduce (ι m) (ι m')
@@ -299,11 +299,11 @@ namespace Reduce
   open Term
 
   -- https://plfa.github.io/DeBruijn/#examples
-  example : twoC □ succC □ @zero ∅ —↠ 2 := calc
-    twoC □ succC □ 𝟘
-    _ —→ (ƛ (succC $ succC $ #0)) □ 𝟘 := by apply apξ₁; apply lamβ; exact Value.lam
+  example : twoC ⬝ succC ⬝ @zero ∅ —↠ 2 := calc
+    twoC ⬝ succC ⬝ 𝟘
+    _ —→ (ƛ (succC $ succC $ #0)) ⬝ 𝟘 := by apply apξ₁; apply lamβ; exact Value.lam
     _ —→ (succC $ succC $ 𝟘) := by apply lamβ; exact V𝟘
-    _ —→ succC □ 1 := by
+    _ —→ succC ⬝ 1 := by
       apply apξ₂
       · apply Value.lam
       · unfold succC; exact lamβ V𝟘
@@ -332,7 +332,7 @@ def progress : (m : ∅ ⊢ a) → Progress m := open Progress Reduce in by
   intro
   | ‵ _ => contradiction
   | ƛ _ => exact .done Value.lam
-  | jl □ jm => cases progress jl with
+  | jl ⬝ jm => cases progress jl with
     | step => apply step; · apply apξ₁; trivial
     | done vl => cases progress jm with
       | step => apply step; apply apξ₂ <;> trivial
@@ -382,12 +382,12 @@ info: DeBruijn.Result.dnf
 info: DeBruijn.Result.done
   (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.zero)))))
 -/
-#guard_msgs in #eval eval 100 (add □ 2 □ 2) |> (·.3)
+#guard_msgs in #eval eval 100 (add ⬝ 2 ⬝ 2) |> (·.3)
   /--
 info: DeBruijn.Result.done
   (DeBruijn.Value.succ
     (DeBruijn.Value.succ
       (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.succ (DeBruijn.Value.zero)))))))
 -/
-#guard_msgs in #eval eval 100 (mul □ 2 □ 3) |> (·.3)
+#guard_msgs in #eval eval 100 (mul ⬝ 2 ⬝ 3) |> (·.3)
 end examples

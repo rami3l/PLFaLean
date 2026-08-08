@@ -74,7 +74,7 @@ mutual
   -/
   def 𝕍 : Value → Clos → Prop
   | _, .clos (‵ _) _ => ⊥
-  | _, .clos (_ □ _) _ => ⊥
+  | _, .clos (_ ⬝ _) _ => ⊥
   | ⊥, .clos (ƛ _) _ => ⊤
   | vw@(v ⇾ w), .clos (ƛ n) γ =>
     have : sizeOf w < sizeOf vw := by subst_vars; simp only [Value.fn.sizeOf_spec,

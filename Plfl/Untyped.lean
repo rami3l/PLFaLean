@@ -106,7 +106,7 @@ namespace Notation
 
   scoped prefix:50 "ƛ " => lam
   scoped infixr:min " $ " => ap
-  scoped infixl:70 " □ " => ap
+  scoped infixl:70 " ⬝ " => ap
   scoped prefix:90 "‵" => var
 
   -- https://plfa.github.io/Untyped/#writing-variables-as-numerals
@@ -117,14 +117,14 @@ namespace Term
   -- https://plfa.github.io/Untyped/#test-examples
   abbrev twoC : Γ ⊢ ✶ := ƛ ƛ (#1 $ #1 $ #0)
   abbrev fourC : Γ ⊢ ✶ := ƛ ƛ (#1 $ #1 $ #1 $ #1 $ #0)
-  abbrev addC : Γ ⊢ ✶ := ƛ ƛ ƛ ƛ (#3 □ #1 $ #2 □ #1 □ #0)
-  abbrev fourC' : Γ ⊢ ✶ := addC □ twoC □ twoC
+  abbrev addC : Γ ⊢ ✶ := ƛ ƛ ƛ ƛ (#3 ⬝ #1 $ #2 ⬝ #1 ⬝ #0)
+  abbrev fourC' : Γ ⊢ ✶ := addC ⬝ twoC ⬝ twoC
 
   def church (n : ℕ) : Γ ⊢ ✶ := ƛ ƛ applyN n
   where
     applyN
     | 0 => #0
-    | n + 1 => #1 □ applyN n
+    | n + 1 => #1 ⬝ applyN n
 end Term
 
 namespace Subst
@@ -145,7 +145,7 @@ namespace Subst
     intro ρ; intro
     | ‵ x => exact ‵ (ρ x)
     | ƛ n => exact ƛ (rename (ext ρ) n)
-    | l □ m => exact rename ρ l □ rename ρ m
+    | l ⬝ m => exact rename ρ l ⬝ rename ρ m
 
   abbrev shift : Γ ⊢ a → Γ‚ b ⊢ a := rename .s
 
@@ -164,7 +164,7 @@ namespace Subst
     intro σ; intro
     | ‵ i => exact σ i
     | ƛ n => exact ƛ (subst (exts σ) n)
-    | l □ m => exact subst σ l □ subst σ m
+    | l ⬝ m => exact subst σ l ⬝ subst σ m
 
   -- https://plfa.github.io/Untyped/#single-substitution
   abbrev subst₁σ (v : Γ ⊢ b) : ∀ {a}, Γ‚ b ∋ a → Γ ⊢ a
@@ -189,7 +189,7 @@ end Notation
 mutual
   inductive Neutral : Γ ⊢ a → Type
   | var : (x : Γ ∋ a) → Neutral (‵ x)
-  | ap : Neutral l → Normal m → Neutral (l □ m)
+  | ap : Neutral l → Normal m → Neutral (l ⬝ m)
   deriving Repr
 
   inductive Normal : Γ ⊢ a → Type
@@ -208,11 +208,11 @@ namespace Notation
 
   scoped prefix:50 "ƛₙ " => lam
   scoped infixr:min " $ₙ " => ap
-  scoped infixl:70 " □ₙ " => ap
+  scoped infixl:70 " ⬝ₙ " => ap
   scoped prefix:90 "‵ₙ" => var
 end Notation
 
-example : Normal (Term.twoC (Γ := ∅)) := ƛₙ ƛₙ (′#′1 □ₙ (′#′1 □ₙ (′#′0)))
+example : Normal (Term.twoC (Γ := ∅)) := ƛₙ ƛₙ (′#′1 ⬝ₙ (′#′1 ⬝ₙ (′#′0)))
 
 -- https://plfa.github.io/Untyped/#reduction-step
 /--
@@ -222,26 +222,26 @@ _Note: This time there's no need to generate data out of `Reduce t t'`,
 so it can just be a `Prop`._
 -/
 inductive Reduce : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
-| lamβ : Reduce ((ƛ n) □ v) (n⟦v⟧)
+| lamβ : Reduce ((ƛ n) ⬝ v) (n⟦v⟧)
 | lamζ : Reduce n n' → Reduce (ƛ n) (ƛ n')
-| apξ₁ : Reduce l l' → Reduce (l □ m) (l' □ m)
-| apξ₂ : Reduce m m' → Reduce (v □ m) (v □ m')
+| apξ₁ : Reduce l l' → Reduce (l ⬝ m) (l' ⬝ m)
+| apξ₂ : Reduce m m' → Reduce (v ⬝ m) (v ⬝ m')
 
 -- https://plfa.github.io/Untyped/#exercise-variant-1-practice
 inductive Reduce' : (Γ ⊢ a) → (Γ ⊢ a) → Type where
-| lamβ : Normal (ƛ n) → Normal v → Reduce' ((ƛ n) □ v) (n⟦v⟧)
+| lamβ : Normal (ƛ n) → Normal v → Reduce' ((ƛ n) ⬝ v) (n⟦v⟧)
 | lamζ : Reduce' n n' → Reduce' (ƛ n) (ƛ n')
-| apξ₁ : Reduce' l l' → Reduce' (l □ m) (l' □ m)
-| apξ₂ : Normal v → Reduce' m m' → Reduce' (v □ m) (v □ m')
+| apξ₁ : Reduce' l l' → Reduce' (l ⬝ m) (l' ⬝ m)
+| apξ₂ : Normal v → Reduce' m m' → Reduce' (v ⬝ m) (v ⬝ m')
 
 -- https://plfa.github.io/Untyped/#exercise-variant-2-practice
 inductive Reduce'' : (Γ ⊢ a) → (Γ ⊢ a) → Type where
-| lamβ : Reduce'' ((ƛ n) □ (ƛ v)) (n⟦ƛ v⟧)
-| apξ₁ : Reduce'' l l' → Reduce'' (l □ m) (l' □ m)
-| apξ₂ : Reduce'' m m' → Reduce'' (v □ m) (v □ m')
+| lamβ : Reduce'' ((ƛ n) ⬝ (ƛ v)) (n⟦ƛ v⟧)
+| apξ₁ : Reduce'' l l' → Reduce'' (l ⬝ m) (l' ⬝ m)
+| apξ₂ : Reduce'' m m' → Reduce'' (v ⬝ m) (v ⬝ m')
 /-
 Reduction of `four''C` under this variant might go as far as
-`ƛ ƛ (twoC □ #1 $ (twoC □ #1 □ #0))` and get stuck,
+`ƛ ƛ (twoC ⬝ #1 $ (twoC ⬝ #1 ⬝ #0))` and get stuck,
 since the next step uses `lamζ` which no longer exists.
 -/
 
@@ -282,14 +282,14 @@ namespace Reduce
     simp_all only [List.empty_eq]
     rfl
 
-  example : fourC' (Γ := ∅) —↠ fourC := calc addC □ twoC □ twoC
-    _ —→ (ƛ ƛ ƛ (twoC □ #1 $ (#2 □ #1 □ #0))) □ twoC := by
+  example : fourC' (Γ := ∅) —↠ fourC := calc addC ⬝ twoC ⬝ twoC
+    _ —→ (ƛ ƛ ƛ (twoC ⬝ #1 $ (#2 ⬝ #1 ⬝ #0))) ⬝ twoC := by
       apply apξ₁
       exact lamβ
-    _ —→ ƛ ƛ (twoC □ #1 $ (twoC □ #1 □ #0)) := by exact lamβ
-    _ —→ ƛ ƛ ((ƛ (#2 $ #2 $ #0)) $ (twoC □ #1 □ #0)) := by apply_rules [lamζ, apξ₁, lamβ]
-    _ —→ ƛ ƛ (#1 $ #1 $ (twoC □ #1 □ #0)) := by apply_rules [lamζ, lamβ]
-    _ —→ ƛ ƛ (#1 $ #1 $ ((ƛ (#2 $ #2 $ #0)) □ #0)) := by apply_rules [lamζ, apξ₁, apξ₂, lamβ]
+    _ —→ ƛ ƛ (twoC ⬝ #1 $ (twoC ⬝ #1 ⬝ #0)) := by exact lamβ
+    _ —→ ƛ ƛ ((ƛ (#2 $ #2 $ #0)) $ (twoC ⬝ #1 ⬝ #0)) := by apply_rules [lamζ, apξ₁, lamβ]
+    _ —→ ƛ ƛ (#1 $ #1 $ (twoC ⬝ #1 ⬝ #0)) := by apply_rules [lamζ, lamβ]
+    _ —→ ƛ ƛ (#1 $ #1 $ ((ƛ (#2 $ #2 $ #0)) ⬝ #0)) := by apply_rules [lamζ, apξ₁, apξ₂, lamβ]
     _ —→ ƛ ƛ (#1 $ #1 $ #1 $ #1 $ #0) := by apply_rules [lamζ, apξ₁, apξ₂, lamβ]
 end Reduce
 
@@ -313,20 +313,20 @@ def progress : (m : Γ ⊢ ✶) → Progress m
     match progress n with
     | .done n' => .done (ƛₙ n')
     | .step r => .step (Reduce.lamζ r)
-  | ‵ x □ m =>
-    have : sizeOf m < sizeOf (‵ x □ m) := by simp only [Term.ap.sizeOf_spec]; omega
+  | ‵ x ⬝ m =>
+    have : sizeOf m < sizeOf (‵ x ⬝ m) := by simp only [Term.ap.sizeOf_spec]; omega
     match progress m with
-    | .done m' => .done (′ ‵ₙ x □ₙ m')
+    | .done m' => .done (′ ‵ₙ x ⬝ₙ m')
     | .step r => .step (Reduce.apξ₂ r)
-  | (ƛ n) □ m => .step Reduce.lamβ
-  | (l' □ l'') □ m =>
-    have : sizeOf (l' □ l'') < sizeOf ((l' □ l'') □ m) := by simp only [Term.ap.sizeOf_spec]; omega
-    match progress (l' □ l'') with
+  | (ƛ n) ⬝ m => .step Reduce.lamβ
+  | (l' ⬝ l'') ⬝ m =>
+    have : sizeOf (l' ⬝ l'') < sizeOf ((l' ⬝ l'') ⬝ m) := by simp only [Term.ap.sizeOf_spec]; omega
+    match progress (l' ⬝ l'') with
     | .step r => .step (Reduce.apξ₁ r)
     | .done (′neutral_l) =>
-      have : sizeOf m < sizeOf ((l' □ l'') □ m) := by simp only [Term.ap.sizeOf_spec]; omega
+      have : sizeOf m < sizeOf ((l' ⬝ l'') ⬝ m) := by simp only [Term.ap.sizeOf_spec]; omega
       match progress m with
-      | .done m' => .done (′neutral_l □ₙ m')
+      | .done m' => .done (′neutral_l ⬝ₙ m')
       | .step r => .step (Reduce.apξ₂ r)
 termination_by m => sizeOf m
 
@@ -355,8 +355,8 @@ def eval (gas : ℕ) (l : ∅ ⊢ a) : Steps l :=
 
 namespace Term
   abbrev id : Γ ⊢ ✶ := ƛ #0
-  abbrev delta : Γ ⊢ ✶ := ƛ #0 □ #0
-  abbrev omega : Γ ⊢ ✶ := delta □ delta
+  abbrev delta : Γ ⊢ ✶ := ƛ #0 ⬝ #0
+  abbrev omega : Γ ⊢ ✶ := delta ⬝ delta
 
   -- https://plfa.github.io/Untyped/#naturals-and-fixpoint
   /-
@@ -369,13 +369,13 @@ namespace Term
           = λ s _ => s (λ _ z => z)
   -/
   abbrev zeroS : Γ ⊢ ✶ := ƛ ƛ #0
-  abbrev succS (m : Γ ⊢ ✶) : Γ ⊢ ✶ := (ƛ ƛ ƛ (#1 □ #2)) □ m
-  abbrev caseS (l : Γ ⊢ ✶) (m : Γ ⊢ ✶) (n : Γ‚ ✶ ⊢ ✶) : Γ ⊢ ✶ := l □ (ƛ n) □ m
+  abbrev succS (m : Γ ⊢ ✶) : Γ ⊢ ✶ := (ƛ ƛ ƛ (#1 ⬝ #2)) ⬝ m
+  abbrev caseS (l : Γ ⊢ ✶) (m : Γ ⊢ ✶) (n : Γ‚ ✶ ⊢ ✶) : Γ ⊢ ✶ := l ⬝ (ƛ n) ⬝ m
 
   /--
   The Y combinator: `Y f := (λ x => f (x x)) (λ x => f (x x))`
   -/
-  abbrev mu (n : Γ‚ ✶ ⊢ ✶) : Γ ⊢ ✶ := (ƛ (ƛ (#1 $ #0 $ #0)) □ (ƛ (#1 $ #0 $ #0))) □ (ƛ n)
+  abbrev mu (n : Γ‚ ✶ ⊢ ✶) : Γ ⊢ ✶ := (ƛ (ƛ (#1 $ #0 $ #0)) ⬝ (ƛ (#1 $ #0 $ #0))) ⬝ (ƛ n)
 end Term
 
 namespace Notation
@@ -391,19 +391,19 @@ end Notation
 section examples
   open Term
 
-  abbrev addS : Γ ⊢ ✶ := μ ƛ ƛ (𝟘? (#1) (#0) (ι (#3 □ #0 □ #1)))
+  abbrev addS : Γ ⊢ ✶ := μ ƛ ƛ (𝟘? (#1) (#0) (ι (#3 ⬝ #0 ⬝ #1)))
 
   -- https://plfa.github.io/Untyped/#exercise-multiplication-untyped-recommended
-  abbrev mulS : Γ ⊢ ✶ := μ ƛ ƛ (𝟘? (#1) 𝟘 (addS □ #1 $ #3 □ #0 □ #1))
+  abbrev mulS : Γ ⊢ ✶ := μ ƛ ƛ (𝟘? (#1) 𝟘 (addS ⬝ #1 $ #3 ⬝ #0 ⬝ #1))
 
   abbrev oneS : Γ ⊢ ✶ := ι 𝟘
 
   abbrev twoS : Γ ⊢ ✶ := ι ι 𝟘
-  abbrev twoS'' : Γ ⊢ ✶ := mulS □ twoS □ oneS
+  abbrev twoS'' : Γ ⊢ ✶ := mulS ⬝ twoS ⬝ oneS
 
   abbrev fourS : Γ ⊢ ✶ := ι ι twoS
-  abbrev fourS' : Γ ⊢ ✶ := addS □ twoS □ twoS
-  abbrev fourS'' : Γ ⊢ ✶ := mulS □ twoS □ twoS
+  abbrev fourS' : Γ ⊢ ✶ := addS ⬝ twoS ⬝ twoS
+  abbrev fourS'' : Γ ⊢ ✶ := mulS ⬝ twoS ⬝ twoS
 
   abbrev evalRes (l : ∅ ⊢ a) (gas := 100) := (eval gas l).3
   -- abbrev evalResStar (l : ∅ ⊢ ✶) (gas := 100) := (eval gas l).3
@@ -568,11 +568,11 @@ Default structural recursion cannot be used since it depends on sizeOf,
 however this won't work for `Prop`.
 We have to find another way.
 -/
-theorem Reduce.ap_congr₁ (rs : l —↠ l') : (l □ m) —↠ (l' □ m) := by
+theorem Reduce.ap_congr₁ (rs : l —↠ l') : (l ⬝ m) —↠ (l' ⬝ m) := by
   refine rs.head_induction_on .refl ?_
   · introv; intro r _ rs; refine .head ?_ rs; exact apξ₁ r
 
-theorem Reduce.ap_congr₂ (rs : m —↠ m') : (l □ m) —↠ (l □ m') := by
+theorem Reduce.ap_congr₂ (rs : m —↠ m') : (l ⬝ m) —↠ (l ⬝ m') := by
   refine rs.head_induction_on .refl ?_
   · introv; intro r _ rs; refine .head ?_ rs; exact apξ₂ r
 

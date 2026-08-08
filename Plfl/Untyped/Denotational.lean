@@ -151,7 +151,7 @@ end Env.Sub
 -/
 inductive Eval : Env Γ → (Γ ⊢ ✶) → Value → Prop where
 | var : Eval γ (‵ i) (γ i)
-| ap : Eval γ l (v ⇾ w) → Eval γ m v → Eval γ (l □ m) w
+| ap : Eval γ l (v ⇾ w) → Eval γ m v → Eval γ (l ⬝ m) w
 | fn {v w} : Eval (γ`‚ v) n w → Eval γ (ƛ n) (v ⇾ w)
 | bot : Eval γ m ⊥
 | conj : Eval γ m v → Eval γ m w → Eval γ m (v ⊔ w)
@@ -165,7 +165,7 @@ end Notation
 Relaxation of table lookup in application,
 allowing an argument to match an input entry if the latter is less than the former.
 -/
-theorem Eval.ap_sub (d : γ ⊢ l ￬ v ⇾ w) (d' : γ ⊢ m ￬ v') (lt : v ⊑ v') : γ ⊢ l □ m ￬ w
+theorem Eval.ap_sub (d : γ ⊢ l ￬ v ⇾ w) (d' : γ ⊢ m ￬ v') (lt : v ⊑ v') : γ ⊢ l ⬝ m ￬ w
 := d.ap <| d'.sub lt
 
 namespace Example
@@ -180,7 +180,7 @@ namespace Example
   theorem denot_id₃ : γ ⊢ id ￬ (⊥ ⇾ ⊥) ⊔ ((⊥ ⇾ ⊥) ⇾ (⊥ ⇾ ⊥)) := denot_id₁.conj denot_id₂
 
   -- Oops, self application!
-  theorem denot_id_ap_id : `∅ ⊢ id □ id ￬ v ⇾ v := .ap (.fn .var) (.fn .var)
+  theorem denot_id_ap_id : `∅ ⊢ id ⬝ id ￬ v ⇾ v := .ap (.fn .var) (.fn .var)
 
   -- In `def twoC f u := f (f u)`,
   -- `f`'s table must include two entries, both `u ⇾ v` and `v ⇾ w`.

@@ -53,8 +53,8 @@ end Notation
 
 open Notation
 
-lemma 𝒜_ℰ (d : ℰ (l □ m) γ v) : (ℰ l ● ℰ m) γ v := by
-  generalize hx : l □ m = x at *
+lemma 𝒜_ℰ (d : ℰ (l ⬝ m) γ v) : (ℰ l ● ℰ m) γ v := by
+  generalize hx : l ⬝ m = x at *
   induction d with try injection hx
   | bot => left; rfl
   | ap d d' => subst_vars; right; rename_i v' _ _ _ _; exists v'
@@ -73,11 +73,11 @@ lemma 𝒜_ℰ (d : ℰ (l □ m) γ v) : (ℰ l ● ℰ m) γ v := by
         right; refine ⟨v' ⊔ v'', ?_, ev'.conj ev''⟩
         exact (efv'.conj efv'').sub fn_conj_sub_conj_fn
 
-lemma ℰ_ap : (ℰ l ● ℰ m) γ v → ℰ (l □ m) γ v
+lemma ℰ_ap : (ℰ l ● ℰ m) γ v → ℰ (l ⬝ m) γ v
 | .inl lt => .sub .bot lt
 | .inr ⟨_, efv, ev⟩ => efv.ap ev
 
-theorem ap_equiv : ℰ (l □ m) = (ℰ l ● ℰ m) := by ext; exact ⟨𝒜_ℰ, ℰ_ap⟩
+theorem ap_equiv : ℰ (l ⬝ m) = (ℰ l ● ℰ m) := by ext; exact ⟨𝒜_ℰ, ℰ_ap⟩
 
 abbrev 𝒱 (i : Γ ∋ ✶) (γ : Env Γ) (v : Value) : Prop := v ⊑ γ i
 
@@ -97,10 +97,10 @@ lemma lam_congr (h : ℰ n = ℰ n') : ℰ (ƛ n) = ℰ (ƛ n') := calc _
   _ = ℱ (ℰ n') := by rw [h]
   _ = ℰ (ƛ n') := lam_equiv.symm
 
-lemma ap_congr (hl : ℰ l = ℰ l') (hm : ℰ m = ℰ m') : ℰ (l □ m) = ℰ (l' □ m') := calc _
+lemma ap_congr (hl : ℰ l = ℰ l') (hm : ℰ m = ℰ m') : ℰ (l ⬝ m) = ℰ (l' ⬝ m') := calc _
   _ = ℰ l ● ℰ m := ap_equiv
   _ = ℰ l' ● ℰ m' := by rw [hl, hm]
-  _ = ℰ (l' □ m') := ap_equiv.symm
+  _ = ℰ (l' ⬝ m') := ap_equiv.symm
 
 -- https://plfa.github.io/Compositional/#compositionality
 open Untyped (Context)
@@ -124,8 +124,8 @@ inductive Holed : Context → Context → Type where
 def Holed.plug : Holed Γ Δ → (Γ ⊢ ✶) → (Δ ⊢ ✶)
 | .hole, m => m
 | .lam c, n => ƛ c.plug n
-| .apL c n, l => c.plug l □ n
-| .apR l c, m => l □ c.plug m
+| .apL c n, l => c.plug l ⬝ n
+| .apR l c, m => l ⬝ c.plug m
 
 /--
 Given two terms that are denotationally equal,
@@ -147,7 +147,7 @@ It is like `ℰ m`, but defined computationally.
 def ℰ₀ : (Γ ⊢ ✶) → Denot Γ
 | ‵ i => 𝒱 i
 | ƛ n => ℱ (ℰ₀ n)
-| l □ m => ℰ₀ l ● ℰ₀ m
+| l ⬝ m => ℰ₀ l ● ℰ₀ m
 
 /-- The two definitions of `ℰ` are equivalent. -/
 theorem ℰ_eq_ℰ₀ : ℰ (Γ := Γ) = ℰ₀ := by ext; rw [impl]
