@@ -173,21 +173,21 @@ theorem reduce_reflect {γ : Env Γ} {m n : Γ ⊢ a} (d : γ ⊢ n ￬ v) (r : 
     | conj _ _ ih ih' => exact (ih r ihᵣ hx).conj (ih' r ihᵣ hx)
     | sub _ lt ih => exact (ih r ihᵣ hx).sub lt
   | apξ₁ r ihᵣ =>
-    rename_i l m; generalize hx : l □ m = x at *
+    rename_i l m; generalize hx : l ⬝ m = x at *
     induction d with try contradiction
     | ap d d' _ _ => injection hx; subst_vars; exact (ihᵣ d).ap d'
     | bot => exact .bot
     | conj _ _ ih ih' => exact (ih r ihᵣ hx).conj (ih' r ihᵣ hx)
     | sub _ lt ih => exact (ih r ihᵣ hx).sub lt
   | apξ₂ r ihᵣ =>
-    rename_i m l; generalize hx : l □ m = x at *
+    rename_i m l; generalize hx : l ⬝ m = x at *
     induction d with try contradiction
     | ap d d' _ _ => injection hx; subst_vars; exact d.ap <| ihᵣ d'
     | bot => exact .bot
     | conj _ _ ih ih' => exact (ih r ihᵣ hx).conj (ih' r ihᵣ hx)
     | sub _ lt ih => exact (ih r ihᵣ hx).sub lt
   where
-    beta {Γ m n v} {γ : Env Γ} (d : γ ⊢ n⟦m⟧ ￬ v) : γ ⊢ (ƛ n) □ m ￬ v := by
+    beta {Γ m n v} {γ : Env Γ} (d : γ ⊢ n⟦m⟧ ￬ v) : γ ⊢ (ƛ n) ⬝ m ￬ v := by
       let ⟨v, dm, dn⟩ := subst₁_reflect d; exact dn.fn.ap dm
 
 -- https://plfa.github.io/Soundness/#reduction-implies-denotational-equality

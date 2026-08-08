@@ -102,7 +102,7 @@ namespace Notation
   scoped infixr:min " $ " => ap
   -- scoped infix:60 " ↓ " => syn
   -- scoped postfix:60 "↑ " => inh
-  scoped infixl:70 " □ " => ap
+  scoped infixl:70 " ⬝ " => ap
   scoped prefix:80 "ι " => succ
   scoped prefix:90 "‵" => var
   scoped notation "𝟘" => zero
@@ -121,18 +121,18 @@ abbrev add : TermS :=
   (μ "+" : ƛ "m" : ƛ "n" :
     𝟘? ‵"m"
       [zero: ‵"n"
-      |succ "m" : ι (‵"+" □ ‵"m" □ ‵"n")]
+      |succ "m" : ι (‵"+" ⬝ ‵"m" ⬝ ‵"n")]
   ).the (ℕt =⇒ ℕt =⇒ ℕt)
 
 abbrev mul : TermS :=
   (μ "*" : ƛ "m" : ƛ "n" :
     𝟘? ‵"m"
     [zero: 𝟘
-    |succ "m": add □ ‵"n" $ ‵"*" □ ‵"m" □ ‵"n"]
+    |succ "m": add ⬝ ‵"n" $ ‵"*" ⬝ ‵"m" ⬝ ‵"n"]
   ).the (ℕt =⇒ ℕt =⇒ ℕt)
 
 -- Note that the typing is only required for `add` due to the rule for `ap`.
-abbrev four : TermS := add □ two □ two
+abbrev four : TermS := add ⬝ two ⬝ two
 
 /--
 The Church numeral Ty.
@@ -144,10 +144,10 @@ abbrev succC : TermI := ƛ "n" : ι ‵"n"
 abbrev oneC : TermI := ƛ "s" : ƛ "z" : ‵"s" $ ‵"z"
 abbrev twoC : TermI := ƛ "s" : ƛ "z" : ‵"s" $ ‵"s" $ ‵"z"
 abbrev addC : TermS :=
-  (ƛ "m" : ƛ "n" : ƛ "s" : ƛ "z" : ‵"m" □ ‵"s" $ ‵"n" □ ‵"s" □ ‵"z"
+  (ƛ "m" : ƛ "n" : ƛ "s" : ƛ "z" : ‵"m" ⬝ ‵"s" $ ‵"n" ⬝ ‵"s" ⬝ ‵"z"
   ).the (Ch =⇒ Ch =⇒ Ch)
 -- Note that the typing is only required for `addC` due to the rule for `ap`.
-abbrev four' : TermS := addC □ twoC □ twoC □ succC □ 𝟘
+abbrev four' : TermS := addC ⬝ twoC ⬝ twoC ⬝ succC ⬝ 𝟘
 
 -- https://plfa.github.io/Inference/#bidirectional-type-checking
 /--
@@ -198,7 +198,7 @@ mutual
   -/
   inductive TyS : Context → TermS → Ty → Type where
   | var : Γ ∋ x ⦂ a → TyS Γ (‵ x) a
-  | ap: TyS Γ l (a =⇒ b) → TyI Γ m a → TyS Γ (l □ m) b
+  | ap: TyS Γ l (a =⇒ b) → TyI Γ m a → TyS Γ (l ⬝ m) b
   | prod: TyS Γ m a → TyS Γ n b → TyS Γ (.prod m n) (a * b)
   | syn : TyI Γ m a → TyS Γ (m.the a) a
   deriving Repr
@@ -326,7 +326,7 @@ def Lookup.lookup (Γ : Context) (x : Sym) : Decidable' (Σ a, Γ ∋ x ⦂ a) :
 lemma TyS.empty_arg
 : Γ ⊢ l ⇡ a =⇒ b
 → IsEmpty (Γ ⊢ m ⇣ a)
-→ IsEmpty (Σ b', Γ ⊢ l □ m ⇡ b')
+→ IsEmpty (Σ b', Γ ⊢ l ⬝ m ⇡ b')
 := by
   intro tl n; is_empty; intro ⟨b', .ap tl' tm'⟩
   injection tl.unique tl'; rename_i h _; apply n.false; rwa [←h] at tm'
@@ -340,7 +340,7 @@ mutual
     | ‵ x => match Lookup.lookup Γ x with
       | .inr ⟨a, i⟩ => right; exact ⟨a, .var i⟩
       | .inl n => left; is_empty; intro ⟨a, .var i⟩; exact n.false ⟨a, i⟩
-    | l □ m => match l.infer Γ with
+    | l ⬝ m => match l.infer Γ with
       | .inr ⟨a =⇒ b, tab⟩ => match m.infer Γ a with
         | .inr ta => right; exact ⟨b, .ap tab ta⟩
         | .inl n => left; exact tab.empty_arg n
@@ -434,7 +434,7 @@ abbrev four'Ty : Γ ⊢ four' ⇡ ℕt := open TyS TyI Lookup in by
 
 example : four'.infer ∅ = .inr ⟨ℕt, four'Ty⟩ := by rfl
 
-abbrev four'': TermS := mul □ two □ two
+abbrev four'': TermS := mul ⬝ two ⬝ two
 
 abbrev four''Ty : Γ ⊢ four'' ⇡ ℕt := open TyS TyI Lookup in by
   repeat apply_rules
@@ -473,19 +473,19 @@ info: .inl _
 /--
 info: .inl _
 -/
-#guard_msgs in #eval (add □ succC).infer ∅
+#guard_msgs in #eval (add ⬝ succC).infer ∅
 
 -- Function in application is ill typed:
 /--
 info: .inl _
 -/
-#guard_msgs in #eval (add □ succC □ two).infer ∅
+#guard_msgs in #eval (add ⬝ succC ⬝ two).infer ∅
 
 -- Function in application has type natural:
 /--
 info: .inl _
 -/
-#guard_msgs in #eval (two.the ℕt □ two).infer ∅
+#guard_msgs in #eval (two.the ℕt ⬝ two).infer ∅
 
 -- Abstraction inherits type natural:
 /--

@@ -17,9 +17,9 @@ Parallel reduction.
 -/
 inductive PReduce : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
 | var : PReduce (‵ x) (‵ x)
-| lamβ : PReduce n n' → PReduce v v' → PReduce ((ƛ n) □ v) (n'⟦v'⟧)
+| lamβ : PReduce n n' → PReduce v v' → PReduce ((ƛ n) ⬝ v) (n'⟦v'⟧)
 | lamζ : PReduce n n' → PReduce (ƛ n) (ƛ n')
-| apξ : PReduce l l' → PReduce m m' → PReduce (l □ m) (l' □ m')
+| apξ : PReduce l l' → PReduce m m' → PReduce (l ⬝ m) (l' ⬝ m')
 
 namespace PReduce
   @[refl]
@@ -27,7 +27,7 @@ namespace PReduce
     match m with
     | ‵ i => exact .var
     | ƛ n => apply lamζ; apply refl
-    | l □ m => apply apξ <;> apply refl
+    | l ⬝ m => apply apξ <;> apply refl
 
   abbrev Clos {Γ a} := Relation.ReflTransGen (α := Γ ⊢ a) PReduce
 end PReduce
@@ -67,15 +67,15 @@ namespace PReduce
   theorem toReduceClos : (m ⇛ n) → (m —↠ n)
   | .var => Untyped.Reduce.Clos.refl
   | .lamβ (n:=n) (n':=n') (v:=v) (v':=v') rn rv =>
-    calc (ƛ n) □ v
-      _ —↠ (ƛ n') □ v := Untyped.Reduce.ap_congr₁ (toReduceClos (.lamζ rn))
-      _ —↠ (ƛ n') □ v' := Untyped.Reduce.ap_congr₂ (toReduceClos rv)
+    calc (ƛ n) ⬝ v
+      _ —↠ (ƛ n') ⬝ v := Untyped.Reduce.ap_congr₁ (toReduceClos (.lamζ rn))
+      _ —↠ (ƛ n') ⬝ v' := Untyped.Reduce.ap_congr₂ (toReduceClos rv)
       _ —→ n'⟦v'⟧ := Untyped.Reduce.lamβ
   | .lamζ rn => Untyped.Reduce.lam_congr (toReduceClos rn)
   | .apξ (l:=l) (l':=l') (m:=m) (m':=m') rl rm =>
-    calc l □ m
-      _ —↠ l' □ m := Untyped.Reduce.ap_congr₁ (toReduceClos rl)
-      _ —↠ l' □ m' := Untyped.Reduce.ap_congr₂ (toReduceClos rm)
+    calc l ⬝ m
+      _ —↠ l' ⬝ m := Untyped.Reduce.ap_congr₁ (toReduceClos rl)
+      _ —↠ l' ⬝ m' := Untyped.Reduce.ap_congr₂ (toReduceClos rm)
 end PReduce
 
 def equivPReduceClosReduceClos : (m ⇛* n) ≃ (m —↠ n) where
@@ -144,8 +144,8 @@ Many parallel reductions at once.
 abbrev PReduce.plus : (Γ ⊢ a) → (Γ ⊢ a)
 | ‵ i => ‵ i
 | ƛ n => ƛ (plus n)
-| (ƛ n) □ m => plus n⟦plus m⟧
-| l □ m => plus l □ plus m
+| (ƛ n) ⬝ m => plus n⟦plus m⟧
+| l ⬝ m => plus l ⬝ plus m
 
 namespace Notation
   postfix:max "⁺" => PReduce.plus
@@ -158,7 +158,7 @@ theorem par_triangle {m n : Γ ⊢ a} : (m ⇛ n) → (n ⇛ m⁺) := open PRedu
   | .lamζ pn => exact lamζ (par_triangle pn)
   | .apξ pl pm => rename_i l l' m m'; match l with
     | ‵ _ => exact apξ (par_triangle pl) (par_triangle pm)
-    | _ □ _ => exact apξ (par_triangle pl) (par_triangle pm)
+    | _ ⬝ _ => exact apξ (par_triangle pl) (par_triangle pm)
     | ƛ _ => match pl with | .lamζ pl => exact lamβ (par_triangle pl) (par_triangle pm)
 
 theorem par_diamond {m n n' : Γ ⊢ a} (p : m ⇛ n) (p' : m ⇛ n')

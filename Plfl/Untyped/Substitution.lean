@@ -45,7 +45,7 @@ section
   @[simp] theorem sub_η {σ : Subst (Γ‚ a) Δ} : (⟪σ⟫ (‵ .z) ⦂⦂ (shift ⨟ σ)) = σ (a := b) := by funext i; cases i <;> rfl
   @[simp] theorem z_shift : ((‵ .z) ⦂⦂ shift) = @ids (Γ‚ a) b := by funext i; cases i <;> rfl
   @[simp] theorem ids_seq : (ids ⨟ σ) = σ (a := a) := rfl
-  @[simp] theorem sub_ap {l m : Γ ⊢ ✶} : ⟪σ⟫ (l □ m) = (⟪σ⟫ l) □ (⟪σ⟫ m) := rfl
+  @[simp] theorem sub_ap {l m : Γ ⊢ ✶} : ⟪σ⟫ (l ⬝ m) = (⟪σ⟫ l) ⬝ (⟪σ⟫ m) := rfl
   @[simp] theorem sub_dist : @Eq (Γ‚ a ∋ b → Φ ⊢ b) ((m ⦂⦂ σ) ⨟ τ) ((⟪τ⟫ m) ⦂⦂ (σ ⨟ τ)) := by funext i; cases i <;> rfl
 end
 
@@ -65,7 +65,7 @@ section
     match m with
     | ‵ _ => rfl
     | ƛ n => apply congr_arg Term.lam; rw [rename_subst_ren]; congr; funext _; exact ren_ext
-    | l □ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact rename_subst_ren
+    | l ⬝ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact rename_subst_ren
 
   theorem rename_shift : @Eq (Γ‚ ✶ ⊢ a) (rename .s m) (⟪shift⟫ m) := by
     simp only [rename_subst_ren]; congr
@@ -93,7 +93,7 @@ section
       apply congr_arg Term.lam
       convert sub_ids
       simp_all only [exts_ids]
-    | l □ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact sub_ids
+    | l ⬝ m => simp only [sub_ap]; apply congr_arg₂ Term.ap <;> exact sub_ids
 
   theorem rename_id : rename (λ {_} x => x) m = m := by
     rw [rename_subst_ren]; exact sub_ids
@@ -115,7 +115,7 @@ section
      match m with
     | ‵ _ => rfl
     | ƛ n => apply congr_arg Term.lam; convert comp_rename; exact comp_ext.symm
-    | l □ m => apply congr_arg₂ Term.ap <;> exact comp_rename
+    | l ⬝ m => apply congr_arg₂ Term.ap <;> exact comp_rename
 
   theorem comm_subst_rename {Γ Δ} {σ : Subst Γ Δ} {ρ : ∀ {Γ}, Rename Γ (Γ‚ ✶)}
   (r : ∀ {x : Γ ∋ ✶}, exts σ (ρ x) = rename ρ (σ x)) {m : Γ ⊢ ✶}
@@ -123,7 +123,7 @@ section
   := by
     match m with
     | ‵ _ => exact r
-    | l □ m => apply congr_arg₂ Term.ap <;> exact comm_subst_rename r
+    | l ⬝ m => apply congr_arg₂ Term.ap <;> exact comm_subst_rename r
     | ƛ n =>
       apply congr_arg Term.lam
 
@@ -156,7 +156,7 @@ section
   : ⟪τ⟫ (⟪σ⟫ m) = ⟪σ ⨟ τ⟫ m
   := by match m with
   | ‵ _ => rfl
-  | l □ m => apply congr_arg₂ Term.ap <;> exact sub_sub
+  | l ⬝ m => apply congr_arg₂ Term.ap <;> exact sub_sub
   | ƛ n => calc ⟪τ⟫ (⟪σ⟫ (ƛ n))
     _ = (ƛ ⟪exts τ⟫ (⟪exts σ⟫ n)) := rfl
     _ = (ƛ (⟪exts σ ⨟ exts τ⟫ n)) := by apply congr_arg Term.lam; exact sub_sub

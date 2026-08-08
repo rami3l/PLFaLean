@@ -45,7 +45,7 @@ open Notation
 inductive Eval : ClosEnv Γ → (Γ ⊢ ✶) → Clos → Prop where
 | var : γ i = .clos m δ → Eval δ m v → Eval γ (‵ i) v
 | lam : Eval γ (ƛ m) (.clos (ƛ m) γ)
-| ap : Eval γ l (.clos (ƛ n) δ) → Eval (δ‚' .clos m γ) n v → Eval γ (l □ m) v
+| ap : Eval γ l (.clos (ƛ n) δ) → Eval (δ‚' .clos m γ) n v → Eval γ (l ⬝ m) v
 
 namespace Notation
   scoped notation:40 γ " ⊢ " m " ⇓ " c:51 => Eval γ m c
@@ -53,9 +53,9 @@ end Notation
 
 -- https://plfa.github.io/BigStep/#exercise-big-step-eg-practice
 example
-: γ ⊢ (ƛ ƛ #1) $ (ƛ #0 □ #0) $ (ƛ #0 □ #0)
+: γ ⊢ (ƛ ƛ #1) $ (ƛ #0 ⬝ #0) $ (ƛ #0 ⬝ #0)
 -- (λ x y => x) ((λ f => f f) (λ f => f f)) ⇓ (λ y => ((λ f => f f) (λ f => f f)))
-⇓ .clos (ƛ #1) (γ‚' .clos ((ƛ #0 □ #0) $ (ƛ #0 □ #0)) γ)
+⇓ .clos (ƛ #1) (γ‚' .clos ((ƛ #0 ⬝ #0) $ (ƛ #0 ⬝ #0)) γ)
 := .ap .lam .lam
 
 -- https://plfa.github.io/BigStep/#the-big-step-semantics-is-deterministic
@@ -115,8 +115,8 @@ section
     have ⟨n', rn', en'⟩ := ih' <| ClosEnv.ext eeτ ⟨σ, ee, rfl⟩
     refine ⟨n', ?_, en'⟩; simp only [sub_ap]; rename_i n _ m _
     apply (ap_congr₁ rn).trans; unfold ext_subst at rn'
-    calc ⟪τ⟫ (ƛ n) □ ⟪σ⟫ m
-      _ = (ƛ (⟪exts τ⟫ n)) □ ⟪σ⟫ m := rfl
+    calc ⟪τ⟫ (ƛ n) ⬝ ⟪σ⟫ m
+      _ = (ƛ (⟪exts τ⟫ n)) ⬝ ⟪σ⟫ m := rfl
       _ —→ ⟪subst₁σ (⟪σ⟫ m)⟫ (⟪exts τ⟫ n) := lamβ
       _ = ⟪⟪subst₁σ (⟪σ⟫ m)⟫ ∘ exts τ⟫ n := Substitution.sub_sub
       _ —↠ n' := rn'
@@ -141,7 +141,7 @@ namespace BySubst
 inductive Eval : (Γ ⊢ ✶) → (Γ ⊢ ✶) → Prop where
 -- Hmmm, it's all ƛ's after all?
 | lam : ∀ {n : ∅‚ ✶ ⊢ ✶}, Eval (ƛ n) (ƛ n)
-| ap : Eval l (ƛ m) → Eval (m⟦n⟧) v → Eval (l □ n) v
+| ap : Eval l (ƛ m) → Eval (m⟦n⟧) v → Eval (l ⬝ n) v
 
 namespace Notation
   scoped infix:50 " ⇓' "=> Eval
@@ -165,7 +165,7 @@ theorem Eval.reduce_of_cbn {n : Γ‚ ✶ ⊢ ✶} (ev : m ⇓' (ƛ n)) : m —�
   generalize hx : (ƛ n) = x, hx' : m = x' at *
   induction ev with
   | lam => rfl
-  | ap _evl evmn' ih ih' => subst_vars; rename_i l m n'; calc l □ n'
-      _ —↠ (ƛ m) □ n' := ap_congr₁ <| ih rfl rfl
+  | ap _evl evmn' ih ih' => subst_vars; rename_i l m n'; calc l ⬝ n'
+      _ —↠ (ƛ m) ⬝ n' := ap_congr₁ <| ih rfl rfl
       _ —→ m⟦n'⟧ := lamβ
       _ —↠ (ƛ n) := ih' rfl rfl

@@ -14,7 +14,7 @@ open Subst Notation
 inductive Sim : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
 | var : Sim (‵ x)  (‵ x)
 | lam : Sim n n' → Sim (ƛ n) (ƛ n')
-| ap : Sim l l' → Sim m m' → Sim (l □ m) (l' □ m')
+| ap : Sim l l' → Sim m m' → Sim (l ⬝ m) (l' ⬝ m')
 | let : Sim l l' → Sim m m' → Sim (.let l m) (.let l' m')
 
 namespace Sim

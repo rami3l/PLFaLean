@@ -48,7 +48,7 @@ lemma subst_comp {ρ : ∀ {a}, Γ ∋ a → Δ ∋ a} {σ : ∀ {a}, Δ ∋ a �
   | ƛ t =>
     apply congr_arg lam; rw [subst_comp t]
     conv_lhs => arg 1; ext a t; simp only [Function.comp_apply, exts_comp t]
-  | l □ m => apply congr_arg₂ ap <;> apply subst_comp
+  | l ⬝ m => apply congr_arg₂ ap <;> apply subst_comp
   | 𝟘 => trivial
   | ι t => apply congr_arg succ; apply subst_comp
   | 𝟘? l m n =>
@@ -94,7 +94,7 @@ lemma subst_var (t : Γ ⊢ a) : subst var t = t := by
     apply congr_arg lam
     conv_lhs => arg 1; ext a i; rw [exts_var i]
     exact subst_var t
-  | l □ m => apply congr_arg₂ ap <;> apply subst_var
+  | l ⬝ m => apply congr_arg₂ ap <;> apply subst_var
   | 𝟘 => trivial
   | ι t => apply congr_arg succ; apply subst_var
   | 𝟘? l m n =>
@@ -189,7 +189,7 @@ lemma insert_twice {Γ Δ Φ : Context} {a b c : Ty} (t : Γ‚‚ Δ‚‚ Φ �
   match t with
   | ‵ i => apply congr_arg var; exact insert_twice_idx i
   | ƛ t => apply congr_arg lam; rename_i a' b'; exact insert_twice (Φ := Φ‚ a') t
-  | l □ m => apply congr_arg₂ ap <;> apply insert_twice
+  | l ⬝ m => apply congr_arg₂ ap <;> apply insert_twice
   | 𝟘 => trivial
   | ι t => apply congr_arg succ; apply insert_twice
   | 𝟘? l m n =>
@@ -244,7 +244,7 @@ lemma insert_subst
   match t with
   | ‵ i => exact insert_subst_idx i
   | ƛ t => rename_i a b; apply congr_arg lam; exact insert_subst (Φ := Φ‚ a) t
-  | l □ m => apply congr_arg₂ ap <;> apply insert_subst
+  | l ⬝ m => apply congr_arg₂ ap <;> apply insert_subst
   | 𝟘 => trivial
   | ι t => apply congr_arg succ; apply insert_subst
   | 𝟘? l m n =>
@@ -303,7 +303,7 @@ theorem subst_subst_comp
     apply congr_arg lam
     rw [subst_subst_comp (σ := exts σ) (σ' := exts σ') t]
     congr; ext; apply exts_subst_comp
-  | l □ m => apply congr_arg₂ ap <;> apply subst_subst_comp
+  | l ⬝ m => apply congr_arg₂ ap <;> apply subst_subst_comp
   | 𝟘 => trivial
   | ι t => apply congr_arg succ; apply subst_subst_comp
   | 𝟘? l m n =>

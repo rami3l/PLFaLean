@@ -328,7 +328,7 @@ section examples
   -/
   #guard_msgs in #eval eval 3 tySuccμ |>.3
 
-  abbrev add_2_2 := add □ 2 □ 2
+  abbrev add_2_2 := add ⬝ 2 ⬝ 2
 
   abbrev two_ty : ∅ ⊢ 2 ⦂ ℕt := by
     iterate 2 (apply tySucc)
@@ -372,7 +372,7 @@ section subject_expansion
 example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
     by_contra f
     simp_all only [isEmpty_pi, not_exists, not_isEmpty_iff]
-    let illAp := (ƛ "x" : 𝟘) □ illLam
+    let illAp := (ƛ "x" : 𝟘) ⬝ illLam
     have nty_ill : ∅ ⊬ illAp := by
       intro tt
       refine ⟨fun j => ?_⟩
@@ -462,8 +462,8 @@ Which of the following properties remain true in the presence of these rules? Fo
 * Determinism
 
 Becomes false.
-The term `(ƛ x ⇒ `"x") □ 𝟘` can both be reduced via:
-· apξ₁, to zap □ 𝟘
+The term `(ƛ x ⇒ `"x") ⬝ 𝟘` can both be reduced via:
+· apξ₁, to zap ⬝ 𝟘
 · zepβ, to zap
 ... and they're not equal.
 
@@ -488,17 +488,17 @@ Which of the following properties remain true in the presence of this rule? For 
 
 Becomes false.
 
-The term `(ƛ x ⇒ `"x") □ 𝟘` can both be reduced via:
-· apξ₁, to foo □ 𝟘
+The term `(ƛ x ⇒ `"x") ⬝ 𝟘` can both be reduced via:
+· apξ₁, to foo ⬝ 𝟘
 · lamβ, to `"x"
 ... and they're not equal.
 
 * Progress
 
 Becomes false.
-The term `(ƛ x ⇒ `"x") □ 𝟘` can be reduced via:
-· apξ₁ fooβ₁, to foo □ 𝟘
-· then apξ₁ fooβ₂, to 𝟘 □ 𝟘
+The term `(ƛ x ⇒ `"x") ⬝ 𝟘` can be reduced via:
+· apξ₁ fooβ₁, to foo ⬝ 𝟘
+· then apξ₁ fooβ₂, to 𝟘 ⬝ 𝟘
 ... and now the term get's stuck.
 
 * Preservation
@@ -522,7 +522,7 @@ Remains true.
 * Progress
 
 Becomes false.
-The term `(ƛ x ⇒ `"x") □ 𝟘` is well-typed but gets stucked.
+The term `(ƛ x ⇒ `"x") ⬝ 𝟘` is well-typed but gets stucked.
 -/
 
 -- https://plfa.github.io/Properties/#quiz-3

@@ -151,7 +151,7 @@ namespace Notation
   scoped prefix:50 "μ " => mu
   scoped notation "𝟘? " => case
   scoped infixr:min " $ " => ap
-  scoped infixl:70 " □ " => ap
+  scoped infixl:70 " ⬝ " => ap
   scoped infixl:70 " ⋄ "   => mulP
   scoped prefix:80 "ι " => succ
   scoped prefix:90 "‵" => var
@@ -181,8 +181,8 @@ namespace Term
   example : Γ ⊢ ℕt := ι ι 𝟘
   example : Γ ⊢ ℕt := 2
 
-  @[simp] abbrev add : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) (#0) (ι (#3 □ #0 □ #1)))
-  abbrev four : Γ ⊢ ℕt := add □ 2 □ 2
+  @[simp] abbrev add : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) (#0) (ι (#3 ⬝ #0 ⬝ #1)))
+  abbrev four : Γ ⊢ ℕt := add ⬝ 2 ⬝ 2
 
   /--
   The Church numeral Ty.
@@ -191,14 +191,14 @@ namespace Term
 
   @[simp] abbrev succC : Γ ⊢ ℕt =⇒ ℕt := ƛ ι #0
   @[simp] abbrev twoC : Γ ⊢ Ch a := ƛ ƛ (#1 $ #1 $ #0)
-  @[simp] abbrev addC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 □ #1 $ #2 □ #1 □ #0)
-  abbrev four' : Γ ⊢ ℕt := addC □ twoC □ twoC □ succC □ 𝟘
+  @[simp] abbrev addC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 ⬝ #1 $ #2 ⬝ #1 ⬝ #0)
+  abbrev four' : Γ ⊢ ℕt := addC ⬝ twoC ⬝ twoC ⬝ succC ⬝ 𝟘
 
-  @[simp] abbrev mul : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) 𝟘 (add □ #1 $ #3 □ #0 □ #1))
-  abbrev four'' : Γ ⊢ ℕt := mul □ 2 □ 2
+  @[simp] abbrev mul : Γ ⊢ ℕt =⇒ ℕt =⇒ ℕt := μ ƛ ƛ (𝟘? (#1) 𝟘 (add ⬝ #1 $ #3 ⬝ #0 ⬝ #1))
+  abbrev four'' : Γ ⊢ ℕt := mul ⬝ 2 ⬝ 2
 
   -- https://plfa.github.io/DeBruijn/#exercise-mul-recommended
-  @[simp] abbrev mulC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 □ (#2 □ #1) □ #0)
+  @[simp] abbrev mulC : Γ ⊢ Ch a =⇒ Ch a =⇒ Ch a := ƛ ƛ ƛ ƛ (#3 ⬝ (#2 ⬝ #1) ⬝ #0)
 
   -- https://plfa.github.io/More/#example
   example : ∅ ⊢ ℕp =⇒ ℕp := ƛ #0 ⋄ #0 ⋄ #0
@@ -223,7 +223,7 @@ namespace Subst
     intro ρ; intro
     | ‵ x => exact ‵ (ρ x)
     | ƛ n => exact ƛ (rename (ext ρ) n)
-    | l □ m => exact rename ρ l □ rename ρ m
+    | l ⬝ m => exact rename ρ l ⬝ rename ρ m
     | 𝟘 => exact 𝟘
     | ι n => exact ι (rename ρ n)
     | 𝟘? l m n => exact 𝟘? (rename ρ l) (rename ρ m) (rename (ext ρ) n)
@@ -271,7 +271,7 @@ namespace Subst
     intro σ; intro
     | ‵ i => exact σ i
     | ƛ n => exact ƛ (subst (exts σ) n)
-    | l □ m => exact subst σ l □ subst σ m
+    | l ⬝ m => exact subst σ l ⬝ subst σ m
     | 𝟘 => exact 𝟘
     | ι n => exact ι (subst σ n)
     | 𝟘? l m n => exact 𝟘? (subst σ l) (subst σ m) (subst (exts σ) n)
@@ -324,7 +324,7 @@ namespace Subst
   example
   : let m : ∅ ⊢ ℕt =⇒ ℕt := ƛ (ι #0)
     let m' : ∅‚ ℕt =⇒ ℕt ⊢ ℕt =⇒ ℕt := ƛ (#1 $ #1 $ #0)
-    let n : ∅ ⊢ ℕt =⇒ ℕt := ƛ (ƛ ι #0) □ ((ƛ ι #0) □ #0)
+    let n : ∅ ⊢ ℕt =⇒ ℕt := ƛ (ƛ ι #0) ⬝ ((ƛ ι #0) ⬝ #0)
     m'⟦m⟧ = n
   := rfl
 
@@ -364,9 +364,9 @@ end Value
 `Reduce t t'` says that `t` reduces to `t'` via a given step.
 -/
 inductive Reduce : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
-| lamβ : Value v → Reduce ((ƛ n) □ v) (n⟦v⟧)
-| apξ₁ : Reduce l l' → Reduce (l □ m) (l' □ m)
-| apξ₂ : Value v → Reduce m m' → Reduce (v □ m) (v □ m')
+| lamβ : Value v → Reduce ((ƛ n) ⬝ v) (n⟦v⟧)
+| apξ₁ : Reduce l l' → Reduce (l ⬝ m) (l' ⬝ m)
+| apξ₂ : Value v → Reduce m m' → Reduce (v ⬝ m) (v ⬝ m')
 | zeroβ : Reduce (𝟘? 𝟘 m n) m
 | succβ : Value v → Reduce (𝟘? (ι v) m n) (n⟦v⟧)
 | succξ : Reduce m m' → Reduce (ι m) (ι m')
@@ -442,11 +442,11 @@ namespace Reduce
   -- https://plfa.github.io/DeBruijn/#examples
   open Term
 
-  example : twoC □ succC □ @zero ∅ —↠ 2 := calc
-    twoC □ succC □ 𝟘
-    _ —→ (ƛ (succC $ succC $ #0)) □ 𝟘 := by apply apξ₁; apply lamβ; exact Value.lam
+  example : twoC ⬝ succC ⬝ @zero ∅ —↠ 2 := calc
+    twoC ⬝ succC ⬝ 𝟘
+    _ —→ (ƛ (succC $ succC $ #0)) ⬝ 𝟘 := by apply apξ₁; apply lamβ; exact Value.lam
     _ —→ (succC $ succC $ 𝟘) := by apply lamβ; exact V𝟘
-    _ —→ succC □ 1 := by
+    _ —→ succC ⬝ 1 := by
       apply apξ₂
       · apply Value.lam
       · unfold succC; exact lamβ V𝟘
@@ -481,7 +481,7 @@ def Progress.progress : (m : ∅ ⊢ a) → Progress m := open Reduce in by
   intro
   | ‵ _ => contradiction
   | ƛ _ => exact .done .lam
-  | l □ m => match progress l with
+  | l ⬝ m => match progress l with
     | .step _ => apply step; apply apξ₁; trivial
     | .done l => match progress m with
       | .step _ => apply step; apply apξ₂ <;> trivial
@@ -582,11 +582,11 @@ info: More.Result.dnf
   /--
 info: More.Result.done (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.zero))))
 -/
-#guard_msgs in #eval evalRes <| add □ 2 □ 1
+#guard_msgs in #eval evalRes <| add ⬝ 2 ⬝ 1
   /--
 info: More.Result.done (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.succ (More.Value.zero)))))
 -/
-#guard_msgs in #eval evalRes <| mul □ 2 □ 2
+#guard_msgs in #eval evalRes <| mul ⬝ 2 ⬝ 2
   -- Prim
   /--
 info: More.Result.done (More.Value.prim 6)
