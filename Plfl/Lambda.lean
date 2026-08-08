@@ -507,6 +507,39 @@ namespace Context
   := open Lookup in by
     apply s (by decide); apply s (by decide); apply z
 
+  namespace ExplainShadowing -- here we explain the need for `x ≠ y` in `Lookup`
+    -- Context where "x" is bound TWICE:
+    -- First to ℕt, then shadowed by (ℕt =⇒ ℕt)
+    def shadowedCtx : Context := ∅ ‚ "x" ⦂ ℕt ‚ "x" ⦂ (ℕt =⇒ ℕt)
+
+    -- ✅ The top (newest) binding can be looked up immediately via `z`:
+    example : shadowedCtx ∋ "x" ⦂ (ℕt =⇒ ℕt) :=
+      Lookup.z
+
+    -- ❌ The shadowed (older) binding ℕt CANNOT be looked up!
+    -- Trying to use `s` requires "x" ≠ "x", which is impossible.
+    example : IsEmpty (shadowedCtx ∋ "x" ⦂ ℕt) := ⟨by
+      intro h
+      cases h with
+      | s h_neq _ => exact h_neq rfl     -- "x" ≠ "x" is impossible!
+    ⟩
+
+    -- ============================================================
+    -- 2. BAD LOOKUP (Without `x ≠ y` - Shadowing Ignored)
+    -- ============================================================
+    inductive BadLookup : Context → Sym → Ty → Type where
+    | z : BadLookup (Γ‚ x ⦂ t) x t
+    | s : BadLookup Γ x t → BadLookup (Γ‚ y ⦂ u) x t   -- Missing `x ≠ y`!
+
+    -- ⚠️ WITHOUT `x ≠ y`, we can look up both!
+    example : BadLookup shadowedCtx "x" ℕt := by
+      apply BadLookup.s  -- Skips the top "x" WITHOUT checking "x" ≠ "x"!
+      exact BadLookup.z  -- Erroneously retrieves the shadowed ℕt!
+
+    example : BadLookup shadowedCtx "x" (ℕt =⇒ ℕt) := by
+      exact BadLookup.z
+  end ExplainShadowing
+
   -- https://plfa.github.io/Lambda/#lookup-is-functional
   theorem Lookup.functional : Γ ∋ x ⦂ t → Γ ∋ x ⦂ t' → t = t' := by intro
   | z, z => rfl
