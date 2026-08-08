@@ -231,7 +231,7 @@ namespace Term
   -- https://plfa.github.io/Lambda/#reduction
   set_option hygiene false in
   set_option quotPrecheck false in
-  infix:40 " —→ " => Term.Reduce
+  local infix:40 " —→ " => Term.Reduce
 
   /--
   `Reduce t t'` says that `t` reduces to `t'` (call-by-value algorithm).
@@ -276,6 +276,9 @@ namespace Term
       ------------------------------
     (μ x⇒ m) —→ m[x := μ x⇒ m]
   deriving Repr
+
+  -- define second time so that it is used by deelab
+  infix:40 " —→ " => Term.Reduce
 end Term
 
 namespace Term.Reduce
