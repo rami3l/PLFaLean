@@ -5,6 +5,7 @@ module
 import Mathlib.Data.Nat.Notation
 import Mathlib.Tactic.ApplyFun
 public import Mathlib.Logic.Embedding.Basic
+import Mathlib.Logic.Equiv.Basic
 
 @[expose] public section
 
@@ -365,6 +366,32 @@ namespace Term.Reduce
   def Clos.embedsInClos' : (m —↠ n) ↪ (m —↠' n) where
     toFun := toClos'
     inj' := toClos'_inj
+
+  /--
+  The right inverse of `toClos` fails: `toClos` followed by `toClos'` is NOT the identity on `Clos'`.
+  -/
+  theorem Clos'.toClos_right_inv_false (m : Term) : ∃ (y : m —↠' m), y.toClos.toClos' ≠ y := by
+    use Clos'.trans Clos'.refl Clos'.refl
+    intro h
+    nomatch h
+
+  lemma Clos.zero_eq_nil (x : 𝟘 —↠ 𝟘) : x = Clos.nil := by
+    cases x with
+    | nil => rfl
+    | cons r _ => nomatch r
+
+  /--
+  `Clos` and `Clos'` are not isomorphic (type-equivalent), because `𝟘 —↠ 𝟘` has 1 element
+  while `𝟘 —↠' 𝟘` has infinitely many elements.
+  -/
+  theorem Clos_not_equiv_Clos' : ¬ Nonempty ((𝟘 —↠ 𝟘) ≃ (𝟘 —↠' 𝟘)) := by
+    intro ⟨e⟩
+    have h1 : e.invFun Clos'.refl = Clos.nil := Clos.zero_eq_nil _
+    have h2 : e.invFun (Clos'.trans Clos'.refl Clos'.refl) = Clos.nil := Clos.zero_eq_nil _
+    have h3 : e.invFun Clos'.refl = e.invFun (Clos'.trans Clos'.refl Clos'.refl) := by rw [h1, h2]
+    apply_fun e.toFun at h3
+    rw [e.right_inv, e.right_inv] at h3
+    nomatch h3
 end Term.Reduce
 
 -- https://plfa.github.io/Lambda/#confluence
