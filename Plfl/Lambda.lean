@@ -214,10 +214,10 @@ namespace Term
       split_ifs <;> simp [ih]
 
   example
-  : (ƛ "z" ⇒ ‵"s" □ ‵"s" □ ‵"z")["s" := succC]′
-  = (ƛ "z" ⇒ succC □ succC □ ‵"z") := by rw [subst'_eq_subst]; rfl
+  : (ƛ "z" ⇒ ‵"s" ⬝ ‵"s" ⬝ ‵"z")["s" := succC]′
+  = (ƛ "z" ⇒ succC ⬝ succC ⬝ ‵"z") := by rw [subst'_eq_subst]; rfl
 
-  example : (succC □ succC □ ‵"z")["z" := 𝟘]′ = succC □ succC □ 𝟘 := by rw [subst'_eq_subst]; rfl
+  example : (succC ⬝ succC ⬝ ‵"z")["z" := 𝟘]′ = succC ⬝ succC ⬝ 𝟘 := by rw [subst'_eq_subst]; rfl
   example : (ƛ "x" ⇒ ‵"y")["y" := 𝟘]′ = (ƛ "x" ⇒ 𝟘) := by rw [subst'_eq_subst]; rfl
   example : (ƛ "x" ⇒ ‵"x")["x" := 𝟘]′ = (ƛ "x" ⇒ ‵"x") := by rw [subst'_eq_subst]; rfl
   example : (ƛ "y" ⇒ ‵"y")["x" := 𝟘]′ = (ƛ "y" ⇒ ‵"y") := by rw [subst'_eq_subst]; rfl
