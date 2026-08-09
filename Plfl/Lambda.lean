@@ -296,6 +296,8 @@ namespace Term.Reduce
   /--
   A reflexive and transitive closure,
   defined as a sequence of zero or more steps of the underlying relation `—→`.
+
+  NOTE: this is same as [`Relation.ReflTransGen`](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Logic/Relation.html#Relation.ReflTransGen).
   -/
   inductive Clos : Term → Term → Type where
   | nil : Clos m m
@@ -333,10 +335,18 @@ namespace Term.Reduce
       trans := transOne
   end Clos
 
+  /--
+  An alternative reflexive and transitive closure,
+  defined as the smallest relation that contains `—→` and is reflexive and transitive.
+
+  This definition is more textbook-like. Mentioned here for pedagogical purposes.
+
+  NOTE: this is same as [`Relation.EqvGen`](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Logic/Relation.html#Relation.EqvGen), but without `symm` constructor.
+  -/
   inductive Clos' : Term → Term → Type where
-  | refl : Clos' m m
-  | step : (m —→ n) → Clos' m n
-  | trans : Clos' l m → Clos' m n → Clos' l n
+  | refl : Clos' m m -- same as `Relation.EqvGen.refl`
+  | step : (m —→ n) → Clos' m n -- same as `Relation.EqvGen.rel`
+  | trans : Clos' l m → Clos' m n → Clos' l n -- same as `Relation.EqvGen.trans`
 
   infix:20 " —↠' " => Clos'
 
@@ -395,6 +405,15 @@ namespace Term.Reduce
     apply_fun e.toFun at h3
     rw [e.right_inv, e.right_inv] at h3
     nomatch h3
+
+  /--
+  Nonempty throws away the redundant proof trees of Clos'
+  and asks only whether a reduction path exists.
+
+  This proves that two definitions WOULD be isomorphic if were defined in Prop!
+  -/
+  theorem clos_iff_clos' (m n : Term) : Nonempty (m —↠ n) ↔ Nonempty (m —↠' n) :=
+    ⟨fun ⟨h⟩ => ⟨h.toClos'⟩, fun ⟨h⟩ => ⟨h.toClos⟩⟩
 end Term.Reduce
 
 -- https://plfa.github.io/Lambda/#confluence
@@ -508,8 +527,9 @@ namespace Context
     apply s (by decide); apply s (by decide); apply z
 
   namespace ExplainShadowing -- here we explain the need for `x ≠ y` in `Lookup`
-    -- Context where "x" is bound TWICE:
-    -- First to ℕt, then shadowed by (ℕt =⇒ ℕt)
+    -- Context where `"x"` is bound TWICE:
+    -- First to `ℕt`, then shadowed by `(ℕt =⇒ ℕt)`
+    -- This is same as `List.cons "x" (ℕt =⇒ ℕt) (List.cons "x" ℕt List.nil)`
     def shadowedCtx : Context := ∅ ‚ "x" ⦂ ℕt ‚ "x" ⦂ (ℕt =⇒ ℕt)
 
     -- ✅ The top (newest) binding can be looked up immediately via `z`:
