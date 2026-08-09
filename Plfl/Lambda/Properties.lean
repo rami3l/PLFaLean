@@ -20,7 +20,7 @@ open Sum
 theorem Value.empty_reduce : Value m → ∀ {n}, IsEmpty (m —→ n) := by
   introv v; is_empty; intro r
   cases v <;> try contradiction
-  · case succ v => cases r; · case succξ => apply (empty_reduce v).false; trivial
+  · case succ v => cases r; · case «ξ-suc» => apply (empty_reduce v).false; trivial
 
 theorem Reduce.empty_value : m —→ n → IsEmpty (Value m) := by
   intro r; is_empty; intro v
@@ -29,7 +29,7 @@ theorem Reduce.empty_value : m —→ n → IsEmpty (Value m) := by
 
 -- https://plfa.github.io/Properties/#exercise-canonical--practice
 inductive Canonical : Term → Ty → Type where
-| canLam : ∅‚ x ⦂ t ⊢ n ⦂ u → Canonical (ƛ x : n) (t =⇒ u)
+| canLam : ∅‚ x ⦂ t ⊢ n ⦂ u → Canonical (ƛ x ⇒ n) (t =⇒ u)
 | canZero : Canonical 𝟘 ℕt
 | canSucc : Canonical n ℕt → Canonical (ι n) ℕt
 
@@ -102,23 +102,23 @@ namespace Progress
     | tyVar _ => contradiction
     | tyLam _ => exact done Value.lam
     | tyAp jl jm => cases ofIsTy jl with
-      | step => apply step; · apply apξ₁; trivial
+      | step => apply step; · apply «ξ-·₁»; trivial
       | done vl => cases ofIsTy jm with
-        | step => apply step; apply apξ₂ <;> trivial
+        | step => apply step; apply «ξ-·₂» <;> trivial
         | done => cases vl with
-          | lam => apply step; apply lamβ; trivial
+          | lam => apply step; apply «β-ƛ»; trivial
           | _ => contradiction
     | tyZero => exact done V𝟘
     | tySucc j => cases ofIsTy j with
-      | step => apply step; apply succξ; trivial
+      | step => apply step; apply «ξ-suc»; trivial
       | done => apply done; apply Value.succ; trivial
     | tyCase jl jm jn => cases ofIsTy jl with
-      | step => apply step; apply caseξ; trivial
+      | step => apply step; apply «ξ-case»; trivial
       | done vl => cases vl with
         | lam => trivial
-        | zero => exact step zeroβ
-        | succ => apply step; apply succβ; trivial
-    | tyMu _ => exact step muβ
+        | zero => exact step «β-zero»
+        | succ => apply step; apply «β-suc»; trivial
+    | tyMu _ => exact step «β-μ»
 end Progress
 
 def progress : ∅ ⊢ m ⦂ t → Progress m := Progress.ofIsTy
@@ -139,22 +139,22 @@ namespace Progress'
     | tyVar _ => contradiction
     | tyLam _ => exact inl Value.lam
     | tyAp jl jm => match ofIsTy jl with
-      | inr ⟨n, r⟩ => exact inr ⟨_, apξ₁ r⟩
+      | inr ⟨n, r⟩ => exact inr ⟨_, «ξ-·₁» r⟩
       | inl vl => match ofIsTy jm with
-        | inr ⟨n, r⟩ => apply inr; exact ⟨_, apξ₂ vl r⟩
+        | inr ⟨n, r⟩ => apply inr; exact ⟨_, «ξ-·₂» vl r⟩
         | inl _ => cases canonical jl vl with
-          | canLam => apply inr; refine ⟨_, lamβ ?_⟩; trivial
+          | canLam => apply inr; refine ⟨_, «β-ƛ» ?_⟩; trivial
     | tyZero => exact inl V𝟘
     | tySucc j => match ofIsTy j with
       | inl v => apply inl; exact Value.succ v
-      | inr ⟨n, r⟩ => exact inr ⟨_, succξ r⟩
+      | inr ⟨n, r⟩ => exact inr ⟨_, «ξ-suc» r⟩
     | tyCase jl jm jn => match ofIsTy jl with
-      | inr ⟨n, r⟩ => exact inr ⟨_, caseξ r⟩
+      | inr ⟨n, r⟩ => exact inr ⟨_, «ξ-case» r⟩
       | inl vl => cases vl with
         | lam => trivial
-        | zero => exact inr ⟨_, zeroβ⟩
-        | succ v => exact inr ⟨_, succβ v⟩
-    | tyMu _ => exact inr ⟨_, muβ⟩
+        | zero => exact inr ⟨_, «β-zero»⟩
+        | succ v => exact inr ⟨_, «β-suc» v⟩
+    | tyMu _ => exact inr ⟨_, «β-μ»⟩
 end Progress'
 
 namespace Progress
@@ -277,20 +277,20 @@ def subst
 -- https://plfa.github.io/Properties/#preservation
 def preserve : ∅ ⊢ m ⦂ t → (m —→ n) → ∅ ⊢ n ⦂ t := by
   intro
-  | tyAp jl jm, lamβ _ => apply subst jm; cases jl; · trivial
-  | tyAp jl jm, apξ₁ _ =>
+  | tyAp jl jm, «β-ƛ» _ => apply subst jm; cases jl; · trivial
+  | tyAp jl jm, «ξ-·₁» _ =>
     apply tyAp <;> try trivial
     · apply preserve jl; trivial
-  | tyAp jl jm, apξ₂ _ _ =>
+  | tyAp jl jm, «ξ-·₂» _ _ =>
     apply tyAp <;> try trivial
     · apply preserve jm; trivial
-  | tySucc j, succξ r => apply tySucc; exact preserve j r
-  | tyCase k l m, zeroβ => trivial
-  | tyCase k l m, succβ _ => refine subst ?_ m; cases k; · trivial
-  | tyCase k l m, caseξ _ =>
+  | tySucc j, «ξ-suc» r => apply tySucc; exact preserve j r
+  | tyCase k l m, «β-zero» => trivial
+  | tyCase k l m, «β-suc» _ => refine subst ?_ m; cases k; · trivial
+  | tyCase k l m, «ξ-case» _ =>
       apply tyCase <;> try trivial
       · apply preserve k; trivial
-  | tyMu j, muβ => refine subst ?_ j; apply tyMu; trivial
+  | tyMu j, «β-μ» => refine subst ?_ j; apply tyMu; trivial
 
 -- https://plfa.github.io/Properties/#evaluation
 inductive Result n where
@@ -318,7 +318,7 @@ section examples
   open Term
 
   -- def x : ℕ := x + 1
-  abbrev succμ := μ "x" : ι ‵"x"
+  abbrev succμ := μ "x" ⇒ ι ‵"x"
 
   abbrev tySuccμ : ∅ ⊢ succμ ⦂ ℕt := by
     apply tyMu; apply tySucc; trivial
@@ -357,7 +357,7 @@ section subject_expansion
   example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
     by_contra f
     simp_all only [isEmpty_pi, not_exists, not_isEmpty_iff]
-    let illCase := 𝟘? 𝟘 [zero: 𝟘 |succ "x" : add]
+    let illCase := 𝟘? 𝟘 [zero⇒ 𝟘 |succ "x" ⇒ add]
     have nty_ill : ∅ ⊬ illCase := by
       intro t
       refine ⟨fun j => ?_⟩
@@ -366,13 +366,13 @@ section subject_expansion
       cases jz
       cases js; rename_i js'
       cases js'
-    have := f 𝟘 ℕt illCase tyZero zeroβ
+    have := f 𝟘 ℕt illCase tyZero «β-zero»
     exact nty_ill.false this.some
 
 example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m ⦂ t) := by
     by_contra f
     simp_all only [isEmpty_pi, not_exists, not_isEmpty_iff]
-    let illAp := (ƛ "x" : 𝟘) ⬝ illLam
+    let illAp := (ƛ "x" ⇒ 𝟘) ⬝ illLam
     have nty_ill : ∅ ⊬ illAp := by
       intro tt
       refine ⟨fun j => ?_⟩
@@ -381,7 +381,7 @@ example : IsEmpty (∀ {n t m}, ∅ ⊢ n ⦂ t → (m —→ n) → ∅ ⊢ m �
       exact nty_illLam.false jl  -- Use jl instead of jr
     have h_red : illAp —→ 𝟘 := by
       simp only [illAp]
-      apply lamβ
+      apply «β-ƛ»
       exact Value.lam
     have := f 𝟘 ℕt illAp tyZero h_red  -- Pass arguments explicitly
     exact nty_ill.false this.some
@@ -424,28 +424,28 @@ theorem preserves_unstuck : ∅ ⊢ m ⦂ t → (m —↠ n) → IsEmpty (Stuck 
 -- https://plfa.github.io/Properties/#reduction-is-deterministic
 theorem Reduce.det : (m —→ n) → (m —→ n') → n = n' := by
   intro r r'; cases r
-  · case lamβ =>
+  · case «ξ-·₁» =>
     cases r' <;> try trivial
-    · case apξ₂ => exfalso; rename_i v _ _ r; exact (Value.empty_reduce v).false r
-  · case apξ₁ =>
+    · case «ξ-·₁» => simp only [Term.ap.injEq, and_true]; apply det <;> trivial
+    · case «ξ-·₂» => exfalso; rename_i r _ v _; exact (Value.empty_reduce v).false r
+  · case «ξ-·₂» =>
     cases r' <;> try trivial
-    · case apξ₁ => simp only [Term.ap.injEq, and_true]; apply det <;> trivial
-    · case apξ₂ => exfalso; rename_i r _ v _; exact (Value.empty_reduce v).false r
-  · case apξ₂ =>
+    · case «ξ-·₁» => exfalso; rename_i v _ _ r; exact (Value.empty_reduce v).false r
+    · case «ξ-·₂» => simp only [Term.ap.injEq, true_and]; apply det <;> trivial
+    · case «β-ƛ» => exfalso; rename_i r _ _ _ v; exact (Value.empty_reduce v).false r
+  · case «β-ƛ» =>
     cases r' <;> try trivial
-    · case lamβ => exfalso; rename_i r _ _ _ v; exact (Value.empty_reduce v).false r
-    · case apξ₁ => exfalso; rename_i v _ _ r; exact (Value.empty_reduce v).false r
-    · case apξ₂ => simp only [Term.ap.injEq, true_and]; apply det <;> trivial
-  · case zeroβ => cases r' <;> try trivial
-  · case succβ =>
+    · case «ξ-·₂» => exfalso; rename_i v _ _ r; exact (Value.empty_reduce v).false r
+  · case «ξ-suc» => cases r'; · case «ξ-suc» => simp only [Term.succ.injEq]; apply det <;> trivial
+  · case «ξ-case» =>
     cases r' <;> try trivial
-    · case caseξ => exfalso; rename_i v _ r; exact (Value.empty_reduce (Value.succ v)).false r
-  · case succξ => cases r'; · case succξ => simp only [Term.succ.injEq]; apply det <;> trivial
-  · case caseξ =>
+    · case «ξ-case» => simp only [Term.case.injEq, and_self, and_true]; apply det <;> trivial
+    · case «β-suc» => exfalso; rename_i v r; exact (Value.empty_reduce (Value.succ v)).false r
+  · case «β-zero» => cases r' <;> try trivial
+  · case «β-suc» =>
     cases r' <;> try trivial
-    · case succβ => exfalso; rename_i v r; exact (Value.empty_reduce (Value.succ v)).false r
-    · case caseξ => simp only [Term.case.injEq, and_self, and_true]; apply det <;> trivial
-  · case muβ => cases r'; try trivial
+    · case «ξ-case» => exfalso; rename_i v _ r; exact (Value.empty_reduce (Value.succ v)).false r
+  · case «β-μ» => cases r'; try trivial
 
 -- https://plfa.github.io/Properties/#quiz
 /-
