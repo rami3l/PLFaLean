@@ -15,7 +15,7 @@ inductive Sim : (Γ ⊢ a) → (Γ ⊢ a) → Prop where
 | var : Sim (‵ x)  (‵ x)
 | lam : Sim n n' → Sim (ƛ n) (ƛ n')
 | ap : Sim l l' → Sim m m' → Sim (l ⬝ m) (l' ⬝ m')
-| let : Sim l l' → Sim m m' → Sim (.let l m) (.let l' m')
+| let : Sim l l' → Sim m m' → Sim (.let l m) ((ƛ m') ⬝ l')
 
 namespace Sim
   scoped infix:40 " ~ " => Sim
@@ -31,11 +31,6 @@ namespace Sim
       if h : (l ~ l) ∧ (m ~ m)
         then apply isTrue; exact .ap h.1 h.2
         else apply isFalse; intro (.ap s s'); exact h ⟨s, s'⟩
-    | «let» m n =>
-      if h : (m ~ m) ∧ (n ~ n)
-        then apply isTrue; exact .let h.1 h.2
-        else apply isFalse; intro (.let s s'); exact h ⟨s, s'⟩
-
   -- https://plfa.github.io/Bisimulation/#exercise-_-practice
   lemma of_eq {s : (m : Γ ⊢ a) ~ m'} : (m' = n) → (m ~ n) := by
     intro h; rwa [h] at s
@@ -128,8 +123,8 @@ theorem Leg.fromLegInv {m m' n : Γ ⊢ a} : (m ~ m') → (m —→ n) → Leg m
   | .ap sl sm, .apξ₂ v r =>
     let ⟨s', r'⟩ := fromLegInv sm r; .intro (.ap sl s') (.apξ₂ (commValue sl v) r')
   | .let sm sn, .letξ r =>
-    let ⟨s', r'⟩ := fromLegInv sm r; .intro (.let s' sn) (.letξ r')
-  | .let sm sn, .letβ v => .intro (comm_subst₁ sm sn) (.letβ (commValue sm v))
+    let ⟨s', r'⟩ := fromLegInv sm r; .intro (.let s' sn) (.apξ₂ .lam r')
+  | .let sm sn, .letβ v => .intro (comm_subst₁ sm sn) (.lamβ (commValue sm v))
 
 -- https://plfa.github.io/Bisimulation/#exercise-sim¹-practice
 /--
@@ -151,6 +146,6 @@ theorem LegInv.fromLeg {m m' n' : Γ ⊢ a} : (m ~ m') → (m' —→ n') → Le
     let ⟨s', r'⟩ := fromLeg sl r; .intro (.ap s' sm) (.apξ₁ r')
   | .ap sl sm, .apξ₂ v r =>
     let ⟨s', r'⟩ := fromLeg sm r; .intro (.ap sl s') (.apξ₂ (commValue' sl v) r')
-  | .let sm sn, .letξ r =>
+  | .let sm sn, .apξ₂ .lam r =>
     let ⟨s', r'⟩ := fromLeg sm r; .intro (.let s' sn) (.letξ r')
-  | .let sm sn, .letβ v => .intro (comm_subst₁ sm sn) (.letβ (commValue' sm v))
+  | .let sm sn, .lamβ v => .intro (comm_subst₁ sm sn) (.letβ (commValue' sm v))
